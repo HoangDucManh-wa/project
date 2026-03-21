@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
-import { User } from "../models/user.model"; // Sequelize / Mongoose tuỳ stack
+import userModel from "../models/user.model"; // Mongoose model
 
 // ─────────────────────────────────────────────
-//  Helpers nội bộ
+// Helpers
 // ─────────────────────────────────────────────
 const SALT_ROUNDS = 10;
 
@@ -15,92 +15,86 @@ async function comparePassword(plainText, hashed) {
 }
 
 // ─────────────────────────────────────────────
-//  Service functions
+// Service functions
 // ─────────────────────────────────────────────
 
-/**
- * Tạo user mới
- * @param {{ name: string, email: string, password: string }} data
- * @returns {Promise<object>} user vừa tạo (không có passwordHash)
- */
-async function createUser(data) {
+// ✅ CREATE USER
+export const createUser = async (data) => {
   const { name, email, password } = data;
 
-  // 1. Kiểm tra email đã tồn tại chưa
-  const existing = await User.findOne({ where: { email } });
+  // 1. Check email tồn tại
+  const existing = await userModel.findOne({ email });
   if (existing) {
     const err = new Error("Email đã được sử dụng");
     err.statusCode = 409;
     throw err;
   }
 
-  // 2. Hash password — KHÔNG bao giờ lưu plain text
+  // 2. Hash password
   const passwordHash = await hashPassword(password);
 
-  // 3. Lưu vào DB
-  const user = await User.create({ name, email, passwordHash });
-
-  // 4. Trả về object sạch — loại bỏ passwordHash
-  const { passwordHash: _, ...safeUser } = user.toJSON();
-  return safeUser;
-}
-
-/**
- * Lấy user theo ID
- * @param {string|number} id
- */
-async function getUserById(id) {
-  const user = await User.findByPk(id);
-  if (!user) {
-    const err = new Error("Không tìm thấy user");
-    err.statusCode = 404;
-    throw err;
-  }
-  const { passwordHash: _, ...safeUser } = user.toJSON();
-  return safeUser;
-}
-
-/**
- * Lấy danh sách user (có phân trang)
- * @param {{ page?: number, limit?: number }} options
- */
-async function getAllUsers({ page = 1, limit = 20 } = {}) {
-  const offset = (page - 1) * limit;
-
-  const { count, rows } = await User.findAndCountAll({
-    attributes: { exclude: ["passwordHash"] },
-    limit,
-    offset,
-    order: [["createdAt", "DESC"]],
+  // 3. Tạo user
+  const user = await userModel.create({
+    name,
+    email,
+    passwordHash,
   });
 
-  return {
-    data: rows.map((u) => u.toJSON()),
-    pagination: {
-      total: count,
-      page,
-      limit,
-      totalPages: Math.ceil(count / limit),
-    },
-  };
-}
+  // 4. Xoá password trước khi trả
+  const { passwordHash: _, ...safeUser } = user.toObject();
+  return safeUser;
+};
 
-/**
- * Cập nhật thông tin user
- * @param {string|number} id
- * @param {{ name?: string, email?: string }} updates
- */
-async function updateUser(id, updates) {
-  const user = await User.findByPk(id);
+// ✅ GET USER BY ID
+export const getUserById = async (id) => {
+  const user = await userModel.findById(id);
+
   if (!user) {
     const err = new Error("Không tìm thấy user");
     err.statusCode = 404;
     throw err;
   }
 
-  // Nếu đổi email → check trùng
+  const { passwordHash: _, ...safeUser } = user.toObject();
+  return safeUser;
+};
+
+// ✅ GET ALL USERS (pagination)
+export const getAllUsers = async (page = 1, limit = 20) => {
+  const skip = (page - 1) * limit;
+
+  const [users, total] = await Promise.all([
+    userModel.find().skip(skip).limit(limit).sort({ createdAt: -1 }),
+    userModel.countDocuments(),
+  ]);
+
+  return {
+    data: users.map((u) => {
+      const { passwordHash, ...rest } = u.toObject();
+      return rest;
+    }),
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+};
+
+// ✅ UPDATE USER
+export const updateUser = async (id, updates) => {
+  const user = await userModel.findById(id);
+
+  if (!user) {
+    const err = new Error("Không tìm thấy user");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  // Check email trùng
   if (updates.email && updates.email !== user.email) {
-    const existing = await User.findOne({ where: { email: updates.email } });
+    const existing = await userModel.findOne({ email: updates.email });
     if (existing) {
       const err = new Error("Email đã được sử dụng");
       err.statusCode = 409;
@@ -108,42 +102,36 @@ async function updateUser(id, updates) {
     }
   }
 
-  await user.update(updates);
+  Object.assign(user, updates);
+  await user.save();
 
-  const { passwordHash: _, ...safeUser } = user.toJSON();
+  const { passwordHash, ...safeUser } = user.toObject();
   return safeUser;
-}
+};
 
-/**
- * Xoá user theo ID
- * @param {string|number} id
- */
-async function deleteUser(id) {
-  const user = await User.findByPk(id);
+// ✅ DELETE USER
+export const deleteUser = async (id) => {
+  const user = await userModel.findByIdAndDelete(id);
+
   if (!user) {
     const err = new Error("Không tìm thấy user");
     err.statusCode = 404;
     throw err;
   }
 
-  await user.destroy();
   return { message: `User ${id} đã bị xoá` };
-}
+};
 
-/**
- * Đổi mật khẩu
- * @param {string|number} id
- * @param {{ oldPassword: string, newPassword: string }} passwords
- */
-async function changePassword(id, { oldPassword, newPassword }) {
-  const user = await User.findByPk(id);
+// ✅ CHANGE PASSWORD
+export const changePassword = async (id, { oldPassword, newPassword }) => {
+  const user = await userModel.findById(id);
+
   if (!user) {
     const err = new Error("Không tìm thấy user");
     err.statusCode = 404;
     throw err;
   }
 
-  // Verify mật khẩu cũ
   const isMatch = await comparePassword(oldPassword, user.passwordHash);
   if (!isMatch) {
     const err = new Error("Mật khẩu cũ không đúng");
@@ -152,19 +140,8 @@ async function changePassword(id, { oldPassword, newPassword }) {
   }
 
   const newHash = await hashPassword(newPassword);
-  await user.update({ passwordHash: newHash });
+  user.passwordHash = newHash;
+  await user.save();
 
   return { message: "Đổi mật khẩu thành công" };
-}
-
-// ─────────────────────────────────────────────
-//  Export
-// ─────────────────────────────────────────────
-export {
-  createUser,
-  getUserById,
-  getAllUsers,
-  updateUser,
-  deleteUser,
-  changePassword,
 };
