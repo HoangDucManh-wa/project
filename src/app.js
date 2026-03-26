@@ -1,9 +1,6 @@
 import express from "express";
-import indexRoute from "./routers/index.route.js";
+import routerUse from "./routers/user.route.js";
 const app = express();
 app.use(express.json());
-app.get("/", (req, res) => {
-  res.send("welcome!");
-});
-app.use(indexRoute);
+app.use("/users", routerUse);
 export default app;
