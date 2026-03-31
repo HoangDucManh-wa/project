@@ -1,33 +1,31 @@
-import jwt from "jsonwebtoken";
 import { jwtConfig } from "../configs/jwt.js";
-
-export function verifyToken(req, res, next) {
+import jwt from "jsonwebtoken";
+export const verifyToken = (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
+    const auth = req.headers.authorization;
+    if (!auth) {
       return res.status(401).json({
-        message: "Token is missing",
+        message: "token is missing",
       });
     }
-
-    const token = authHeader.split(" ")[1];
-
+    if (!auth.startsWith("Bearer ")) {
+      return res.status(401).json({
+        message: "invalid token format",
+      });
+    }
+    const token = auth.split(" ")[1];
     if (!token) {
       return res.status(401).json({
-        message: "Invalid token format",
+        message: "invalid token",
       });
     }
-
     const decoded = jwt.verify(token, jwtConfig.secret);
-
     req.user = decoded;
-
     next();
   } catch (err) {
     return res.status(401).json({
-      message: "Unauthorized",
+      message: "unauthorized",
       error: err.message,
     });
   }
-}
+};
