@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { jwtConfig } from "../configs/jwt.js";
-export const verifyToken = (req, res, next) => {
+import { userModel } from "../models/user.model.js";
+export const verifyToken = async (req, res, next) => {
   const dataAuthorization = req.headers.authorization;
   if (!dataAuthorization) {
     return res.status(401).json({
@@ -20,7 +21,15 @@ export const verifyToken = (req, res, next) => {
   }
   try {
     const decoded = jwt.verify(token, jwtConfig.secret);
-    req.user = decoded;
+    const user = await userModel
+      .findOne({ _id: decoded.userId })
+      .select("-password");
+    if (!user) {
+      return res.status(401).json({
+        message: "user not found",
+      });
+    }
+    req.user = user;
     next();
   } catch (err) {
     return res.status(401).json({

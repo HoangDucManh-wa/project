@@ -1,5 +1,6 @@
 import {
   createUser,
+  createUserByAdmin,
   getAllUsers,
   getUserById,
   getUserByName,
@@ -12,6 +13,22 @@ export const createUserController = async (req, res) => {
     const user = await createUser(data);
     return res.status(201).json({
       message: "create user successful",
+      data: user,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "create user failed",
+      error: err.message,
+    });
+  }
+};
+export const createUserByAdminController = async (req, res) => {
+  try {
+    const data = req.body;
+    const role = req.user.role;
+    const user = await createUserByAdmin(data, role);
+    return res.status(201).json({
+      message: "create user by admin successful",
       data: user,
     });
   } catch (err) {

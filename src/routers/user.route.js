@@ -1,5 +1,6 @@
 import {
   createUserController,
+  createUserByAdminController,
   getAllUsersController,
   getUserByIdController,
   getUserByNameController,
@@ -8,11 +9,17 @@ import {
 } from "../controllers/user.controller.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 import express from "express";
+import { checkRole } from "../middlewares/authorization.middleware.js";
 const router = express.Router();
 
-router.get("/", getAllUsersController);
-router.post("/", verifyToken, createUserController);
-
+router.get("/", verifyToken, getAllUsersController);
+router.post("/createUser", createUserController);
+router.post(
+  "/admin/createUser",
+  verifyToken,
+  checkRole("admin"),
+  createUserByAdminController,
+);
 router.get("/search", verifyToken, getUserByNameController); // đặt trước
 router.get("/:id", getUserByIdController);
 

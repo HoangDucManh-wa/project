@@ -8,7 +8,7 @@ const createToken = (data) => {
 };
 export const register = async (data) => {
   const user = await createUser(data);
-  const token = createToken({ userId: user._id });
+  const token = createToken({ useId: user._id });
   return {
     user,
     token,
@@ -29,5 +29,6 @@ export const login = async ({ email, password }) => {
   const token = createToken({ userId: user._id });
   return {
     token,
+    userId: user._id,
   };
 };

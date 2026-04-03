@@ -14,7 +14,7 @@ const validateCreateInput = async (data) => {
     throw new Error("Data is required");
   }
   //1. check email
-  let { name, email, password } = data;
+  let { name, email, password, studentId } = data;
   //1.1 check if email is null
   if (!email) {
     throw new Error("Email is required");
@@ -142,16 +142,52 @@ const validateCreateInput = async (data) => {
       throw new Error("Password must not contain spaces");
     }
   }
+  //4 check studentId
+  if (studentId) {
+    if (typeof studentId !== "string") {
+      throw new Error("studentId must be a string");
+    }
+    if (studentId.includes(" ")) {
+      throw new Error("studentId must not contain spaces");
+    }
+    for (let i = 0; i < studentId.length; i++) {
+      if (!(studentId[i] >= "0" && studentId[i] <= "9")) {
+        throw new Error("invalid studentId");
+      }
+    }
+  }
 };
 //1.The function creates users
 export const createUser = async (data) => {
   await validateCreateInput(data);
-  const { name, email, password } = data;
+  const { name, email, password, studentId, university } = data;
   const hashedPassword = await hashPassword(password);
   const user = await userModel.create({
     name,
     email,
     password: hashedPassword,
+    studentId,
+    university,
+    role: "student",
+  });
+  const { password: _, ...safeData } = user.toObject();
+  return safeData;
+};
+//1.2 The function create user by admin
+export const createUserByAdmin = async (data, role) => {
+  await validateCreateInput(data);
+  if (role !== "admin" && role !== "student") {
+    throw new Error("invalid role");
+  }
+  const { name, email, password, studentId, university } = data;
+  const hashedPassword = await hashPassword(password);
+  const user = await userModel.create({
+    name,
+    email,
+    password: hashedPassword,
+    studentId,
+    university,
+    role: role,
   });
   const { password: _, ...safeData } = user.toObject();
   return safeData;
