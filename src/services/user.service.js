@@ -176,9 +176,6 @@ export const createUser = async (data) => {
 //1.2 The function create user by admin
 export const createUserByAdmin = async (data, role) => {
   await validateCreateInput(data);
-  if (role !== "admin" && role !== "student") {
-    throw new Error("invalid role");
-  }
   const { name, email, password, studentId, university } = data;
   const hashedPassword = await hashPassword(password);
   const user = await userModel.create({

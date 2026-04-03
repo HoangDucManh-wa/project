@@ -25,7 +25,7 @@ export const createUserController = async (req, res) => {
 export const createUserByAdminController = async (req, res) => {
   try {
     const data = req.body;
-    const role = req.user.role;
+    const role = data.role;
     const user = await createUserByAdmin(data, role);
     return res.status(201).json({
       message: "create user by admin successful",

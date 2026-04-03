@@ -3,5 +3,12 @@
   "email":"ducmanh200555@gmail.com",
   "password":"manhhehe123A@",
   "studentId":"23020836",
-  "university":"UET"
+  "university":"UET",
+  "role":"admin"
 }
+
+"name": "Dinh Thanh Long",
+    "email": "long12345@gmail.com",
+    "studentId": "23020834",
+    "university": "UET",
+    "role": "student",
