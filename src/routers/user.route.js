@@ -13,7 +13,6 @@ import { checkRole } from "../middlewares/authorization.middleware.js";
 const router = express.Router();
 
 router.get("/", verifyToken, getAllUsersController);
-router.post("/createUser", createUserController);
 router.post(
   "/admin/createUser",
   verifyToken,
@@ -21,9 +20,9 @@ router.post(
   createUserByAdminController,
 );
 router.get("/search", verifyToken, getUserByNameController); // đặt trước
-router.get("/:id", getUserByIdController);
+router.get("/:id", verifyToken, getUserByIdController);
 
-router.put("/:id", updateUserController);
-router.delete("/:id", deleteUserController);
+router.put("/:id", verifyToken, checkRole("admin"), updateUserController);
+router.delete("/:id", verifyToken, checkRole("admin"), deleteUserController);
 
 export default router;

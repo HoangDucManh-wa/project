@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -22,9 +22,15 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["student", "admin"],
+      enum: ["student", "admin", "club_admin"],
       default: "student",
     },
+    clubs: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Club",
+      },
+    ],
   },
   { timestamps: true },
 );

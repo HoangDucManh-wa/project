@@ -14,7 +14,7 @@ const validateCreateInput = async (data) => {
     throw new Error("Data is required");
   }
   //1. check email
-  let { name, email, password, studentId } = data;
+  let { name, email, password, studentId, clubs } = data;
   //1.1 check if email is null
   if (!email) {
     throw new Error("Email is required");
@@ -156,6 +156,15 @@ const validateCreateInput = async (data) => {
       }
     }
   }
+  //5 check clubs
+  if (clubs) {
+    clubs.forEach(async (x) => {
+      const club = await userModel.findById(x);
+      if (!club) {
+        throw new Error("invalid club");
+      }
+    });
+  }
 };
 //1.The function creates users
 export const createUser = async (data) => {
@@ -169,6 +178,7 @@ export const createUser = async (data) => {
     studentId,
     university,
     role: "student",
+    clubs: null,
   });
   const { password: _, ...safeData } = user.toObject();
   return safeData;
@@ -176,7 +186,7 @@ export const createUser = async (data) => {
 //1.2 The function create user by admin
 export const createUserByAdmin = async (data, role) => {
   await validateCreateInput(data);
-  const { name, email, password, studentId, university } = data;
+  const { name, email, password, studentId, university, clubs } = data;
   const hashedPassword = await hashPassword(password);
   const user = await userModel.create({
     name,
@@ -185,6 +195,7 @@ export const createUserByAdmin = async (data, role) => {
     studentId,
     university,
     role: role,
+    clubs,
   });
   const { password: _, ...safeData } = user.toObject();
   return safeData;
