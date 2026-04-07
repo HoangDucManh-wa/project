@@ -1,35 +1,40 @@
 import { clubModel } from "../models/club.model.js";
 import { userModel } from "../models/user.model.js";
+import AppError from "../utils/AppError.js";
+
 async function validateInput(data) {
   if (!data) {
-    throw new Error("invalid data");
+    throw new AppError("invalid data", 400);
   }
 
   const { clubName, member } = data;
 
   if (!clubName) {
-    throw new Error("clubName is required");
+    throw new AppError("clubName is required", 400);
   }
 
   if (typeof clubName !== "string") {
-    throw new Error("Type of clubName must be string");
+    throw new AppError("Type of clubName must be string", 400);
   }
 
   if (member !== undefined) {
     if (!Array.isArray(member)) {
-      throw new Error("member must be an array");
+      throw new AppError("member must be an array", 400);
     }
     for (let i = 0; i < member.length; i++) {
       let x = member[i];
       if (!x || typeof x !== "object") {
-        throw new Error("Typeof member not valid at index: " + i);
+        throw new AppError(`Typeof member not valid at index: ${i}`, 400);
       }
       if (!x.user) {
-        throw new Error("user in array member is required at index: " + i);
+        throw new AppError(
+          `user in array member is required at index: ${i}`,
+          400,
+        );
       }
       const user = await userModel.findById(x.user);
       if (!user) {
-        throw new Error(`Member user not found at index: ` + i);
+        throw new AppError(`Member user not found at index: ${i}`, 404);
       }
       if (
         x.clubRole !== undefined &&
@@ -37,122 +42,148 @@ async function validateInput(data) {
         x.clubRole !== "vice-president" &&
         x.clubRole !== "president"
       ) {
-        throw new Error(`clubRole not valid at index: ${i}`);
+        throw new AppError(`clubRole not valid at index: ${i}`, 400);
       }
     }
   }
 }
+
 const createClub = async (data) => {
   await validateInput(data);
   const { clubName, member } = data;
   const club = await clubModel.create({ clubName, member });
   return club;
 };
+
 const updateClubName = async (clubName, id) => {
   if (!clubName) {
-    throw new Error("missing updateData");
+    throw new AppError("missing updateData", 400);
   }
   if (!id) {
-    throw new Error("missing id");
+    throw new AppError("missing id", 400);
   }
 
   if (typeof clubName !== "string") {
-    throw new Error("typeof clubName invalid");
+    throw new AppError("typeof clubName invalid", 400);
   }
+
   const club = await clubModel.findByIdAndUpdate(
     id,
-    {
-      clubName,
-    },
+    { clubName },
     { new: true },
   );
-  if (!club) {
-    throw new Error("Club not found");
-  }
-  return club;
-};
-const updateMember = async (userId, clubId, index, clubRole) => {
-  if (!clubId || !userId || (index !== 0 && !index)) {
-    throw new Error("data invalid");
-  }
-  index = Number(index);
-  if (!Number.isInteger(index)) {
-    throw new Error("invalid index");
-  }
-  const club = await clubModel.findById(clubId);
 
   if (!club) {
-    throw new Error("Club not found");
+    throw new AppError("Club not found", 404);
   }
+
+  return club;
+};
+
+const updateMember = async (userId, clubId, index, clubRole) => {
+  if (!clubId || !userId || (index !== 0 && !index)) {
+    throw new AppError("data invalid", 400);
+  }
+
+  index = Number(index);
+
+  if (!Number.isInteger(index)) {
+    throw new AppError("invalid index", 400);
+  }
+
+  const club = await clubModel.findById(clubId);
+  if (!club) {
+    throw new AppError("Club not found", 404);
+  }
+
   const user = await userModel.findById(userId);
   if (!user) {
-    throw new Error("UserId not found");
+    throw new AppError("UserId not found", 404);
   }
+
   if (club.member.length <= index || index < 0) {
-    throw new Error("Invalid member index");
+    throw new AppError("Invalid member index", 400);
   }
+
   for (let i = 0; i < club.member.length; i++) {
     if (userId === club.member[i].user.toString()) {
       if (i !== index) {
-        throw new Error("club is not allowed to have two identical user IDs.");
+        throw new AppError(
+          "club is not allowed to have two identical user IDs.",
+          409,
+        );
       }
     }
   }
+
   club.member[index].user = userId;
+
   if (clubRole) {
     if (
       clubRole !== "member" &&
       clubRole !== "vice-president" &&
       clubRole !== "president"
     ) {
-      throw new Error("invalid clubRole");
+      throw new AppError("invalid clubRole", 400);
     }
     club.member[index].clubRole = clubRole;
   }
+
   await club.save();
   return club;
 };
+
 const addMember = async (idUser, idClub, clubRole) => {
   if (!idUser || !idClub) {
-    throw new Error("idUser and idClub not null");
+    throw new AppError("idUser and idClub not null", 400);
   }
+
   const user = await userModel.findById(idUser);
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
+
   const club = await clubModel.findById(idClub);
   if (!club) {
-    throw new Error("Club not found");
+    throw new AppError("Club not found", 404);
   }
+
   if (
     clubRole !== undefined &&
     clubRole !== "member" &&
     clubRole !== "vice-president" &&
     clubRole !== "president"
   ) {
-    throw new Error("invalid clubRole");
+    throw new AppError("invalid clubRole", 400);
   }
+
   for (let i = 0; i < club.member.length; i++) {
     if (club.member[i].user.toString() === idUser) {
-      throw new Error("concide idUser");
+      throw new AppError("concide idUser", 409);
     }
   }
+
   club.member.push({
     user: idUser,
     clubRole: clubRole,
   });
+
   await club.save();
   return club;
 };
+
 const deleteMember = async (idUser, idClub) => {
   if (!idUser || !idClub) {
-    throw new Error("idUser and idClub not null");
+    throw new AppError("idUser and idClub not null", 400);
   }
+
   const club = await clubModel.findById(idClub);
   if (!club) {
-    throw new Error("Club not found");
+    throw new AppError("Club not found", 404);
   }
+
   let find = false;
+
   for (let i = 0; i < club.member.length; i++) {
     if (idUser === club.member[i].user.toString()) {
       find = true;
@@ -160,10 +191,13 @@ const deleteMember = async (idUser, idClub) => {
       break;
     }
   }
+
   if (!find) {
-    throw new Error("idUser not found in club");
+    throw new AppError("idUser not found in club", 404);
   }
+
   await club.save();
   return club;
 };
+
 export { createClub, updateClubName, updateMember, addMember, deleteMember };
