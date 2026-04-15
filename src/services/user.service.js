@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import { userModel } from "../models/user.model.js";
 //The function hashs password
 const SALT_ROUNDS = 10;
-async function hashPassword(plainText) {
+export async function hashPassword(plainText) {
   return await bcrypt.hash(plainText, SALT_ROUNDS);
 }
 //The function compares a plain password with a hashed password

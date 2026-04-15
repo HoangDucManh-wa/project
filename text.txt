@@ -1,7 +1,7 @@
 {
   "name":"Hoang Duc Manh",
   "email":"ducmanh200555@gmail.com",
-  "password":"manhhehe123A@",
+  "password":"Manhhehe123A@",
   "studentId":"23020836",
   "university":"UET",
   "role":"admin"
