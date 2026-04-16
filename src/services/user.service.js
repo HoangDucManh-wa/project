@@ -121,6 +121,18 @@ export const updateUser = async (data, id) => {
     validatePassword(data.password);
     updateData.password = await hashPassword(data.password);
   }
+
+  // ✅ thêm studentId
+  if (data.studentId) {
+    validateStudentId(data.studentId);
+    updateData.studentId = data.studentId;
+  }
+
+  // ✅ thêm university
+  if (data.university) {
+    updateData.university = data.university;
+  }
+
   const user = await userModel.findByIdAndUpdate(
     id,
     {
@@ -131,6 +143,65 @@ export const updateUser = async (data, id) => {
   if (!user) {
     throw new AppError("User not found", 404);
   }
+  const { password: _, ...safeData } = user.toObject();
+  return safeData;
+};
+export const updateUserByAdmin = async (data, id) => {
+  let updateData = {};
+
+  if (data.name) {
+    validateUserName(data.name);
+    updateData.name = data.name;
+  }
+
+  if (data.email) {
+    validateEmail(data.email);
+    updateData.email = data.email;
+  }
+
+  if (data.password) {
+    validatePassword(data.password);
+    updateData.password = await hashPassword(data.password);
+  }
+
+  if (data.studentId) {
+    validateStudentId(data.studentId);
+    updateData.studentId = data.studentId;
+  }
+
+  if (data.university) {
+    updateData.university = data.university;
+  }
+
+  // ✅ admin được update role
+  if (data.role) {
+    validateUserRole(data.role);
+    updateData.role = data.role;
+  }
+
+  // ✅ admin được update clubs
+  if (data.clubs) {
+    for (const x of data.clubs) {
+      const club = await clubModel.findById(x);
+      if (!club) {
+        throw new AppError("invalid club", 400);
+      }
+    }
+    updateData.clubs = data.clubs;
+  }
+
+  const user = await userModel.findByIdAndUpdate(
+    id,
+    {
+      $set: updateData,
+    },
+    { new: true },
+  );
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
   const { password: _, ...safeData } = user.toObject();
   return safeData;
 };

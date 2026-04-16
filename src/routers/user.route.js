@@ -5,6 +5,7 @@ import {
   getUserByIdController,
   getUserByNameController,
   updateUserController,
+  updateUserByAdminController,
   deleteUserController,
 } from "../controllers/user.controller.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
@@ -22,7 +23,14 @@ router.post(
 router.get("/search", verifyToken, getUserByNameController); // đặt trước
 router.get("/:id", verifyToken, getUserByIdController);
 
-router.put("/:id", verifyToken, checkRole("admin"), updateUserController);
+router.put("/:id", verifyToken, updateUserController);
+router.put(
+  "/:id",
+  verifyToken,
+  checkRole("admin"),
+  updateUserByAdminController,
+);
+
 router.delete("/:id", verifyToken, checkRole("admin"), deleteUserController);
 
 export default router;
