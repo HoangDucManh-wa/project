@@ -41,6 +41,17 @@ export const loginController = async (req, res) => {
     });
   }
 };
+export const logoutController = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: false, // dev
+  });
+
+  res.json({
+    message: "Logout successful",
+  });
+};
 export const forgotPasswordController = async (req, res) => {
   try {
     const email = req.body.email;
