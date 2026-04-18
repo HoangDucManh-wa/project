@@ -8,9 +8,15 @@ export const registerController = async (req, res) => {
   try {
     const data = req.body;
     const registerData = await register(data);
+    const { user, token } = registerData;
+    res.cookie("token", token, {
+      httpOnly: true,
+      samesite: "lax",
+      secure: false, //dev
+    });
     return res.status(201).json({
       message: "register successful",
-      registerData,
+      user,
     });
   } catch (err) {
     return res.status(400).json({
@@ -27,7 +33,7 @@ export const loginController = async (req, res) => {
     const { token, userId } = loginData;
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax",
+      samesite: "lax",
       secure: false, // dev
     });
     return res.status(200).json({
@@ -47,7 +53,6 @@ export const logoutController = (req, res) => {
     sameSite: "lax",
     secure: false, // dev
   });
-
   res.json({
     message: "Logout successful",
   });
