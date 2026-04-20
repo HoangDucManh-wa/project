@@ -21,18 +21,24 @@ export const login = async ({ email, password }) => {
   if (!(email && password)) {
     throw new Error("Missing email or password");
   }
+
   const user = await userModel.findOne({ email });
   if (!user) {
     throw new Error("User doesn't exist");
   }
+
   const checkPassword = await bcrypt.compare(password, user.password);
   if (!checkPassword) {
     throw new Error("Password is wrong");
   }
+
   const token = createToken({ userId: user._id });
+
+  const { password: _, ...safeUser } = user.toObject();
+
   return {
     token,
-    userId: user._id,
+    user: safeUser,
   };
 };
 const resetToken = (data) => {

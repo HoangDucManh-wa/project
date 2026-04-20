@@ -30,7 +30,7 @@ export const loginController = async (req, res) => {
     const data = req.body;
     const { email, password } = data;
     const loginData = await login({ email, password });
-    const { token, userId } = loginData;
+    const { token, user } = loginData;
     res.cookie("token", token, {
       httpOnly: true,
       samesite: "lax",
@@ -38,7 +38,7 @@ export const loginController = async (req, res) => {
     });
     return res.status(200).json({
       message: "login successful",
-      userId,
+      user,
     });
   } catch (err) {
     return res.status(401).json({
