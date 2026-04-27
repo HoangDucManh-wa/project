@@ -1,6 +1,7 @@
 import {
   registerController,
   loginController,
+  meController,
   forgotPasswordController,
   updatePasswordController,
   logoutController,
@@ -8,6 +9,8 @@ import {
 import { verifyToken } from "../middlewares/auth.middleware.js";
 import express from "express";
 const router = express.Router();
+
+router.get("/me", verifyToken, meController);
 router.post("/register", registerController);
 router.post("/login", loginController);
 router.post("/logout", verifyToken, logoutController);

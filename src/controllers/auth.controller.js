@@ -11,8 +11,9 @@ export const registerController = async (req, res) => {
     const { user, token } = registerData;
     res.cookie("token", token, {
       httpOnly: true,
-      samesite: "lax",
+      sameSite: "lax",
       secure: false, //dev
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     });
     return res.status(201).json({
       message: "register successful",
@@ -33,8 +34,9 @@ export const loginController = async (req, res) => {
     const { token, user } = loginData;
     res.cookie("token", token, {
       httpOnly: true,
-      samesite: "lax",
+      sameSite: "lax",
       secure: false, // dev
+      maxAge: 1000 * 60 * 60 * 24 * 7,
     });
     return res.status(200).json({
       message: "login successful",
@@ -85,4 +87,7 @@ export const updatePasswordController = async (req, res) => {
       error: err.message,
     });
   }
+};
+export const meController = (req, res) => {
+  return res.status(200).json(req.user);
 };
