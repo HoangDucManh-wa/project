@@ -45,7 +45,10 @@ const validateCreateInput = async (data) => {
 //1.The function creates users
 export const createUser = async (data) => {
   await validateCreateInput(data);
-  const { name, email, password, studentId, university, avatar } = data;
+  const { name, email, password, studentId, university, avatar, role } = data;
+  if (role !== "student" && role !== "teacher") {
+    role = "student";
+  }
   const hashedPassword = await hashPassword(password);
   const user = await userModel.create({
     name,
@@ -53,7 +56,7 @@ export const createUser = async (data) => {
     password: hashedPassword,
     studentId,
     university,
-    role: "student",
+    role,
     status: "active",
     avatar,
   });

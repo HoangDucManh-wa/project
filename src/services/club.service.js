@@ -1,215 +1,239 @@
 import { clubModel } from "../models/club.model.js";
-import { userModel } from "../models/user.model.js";
 import AppError from "../utils/AppError.js";
-
+import {
+  validateClubName,
+  validateClubCategory,
+  validateClubLeaderId,
+  validateMemberCount,
+  validateClubStatus,
+} from "./validate.service.js";
+import mongoose from "mongoose";
 async function validateInput(data) {
   if (!data) {
     throw new AppError("invalid data", 400);
   }
 
-  const { clubName, member, description } = data; // ✅ thêm description
-
-  if (!clubName) {
-    throw new AppError("clubName is required", 400);
-  }
-
-  if (typeof clubName !== "string") {
-    throw new AppError("Type of clubName must be string", 400);
-  }
-
-  // ✅ validate description (nhẹ, đúng style cũ)
-  if (description !== undefined && typeof description !== "string") {
-    throw new AppError("description must be string", 400);
-  }
-
-  if (member !== undefined) {
-    if (!Array.isArray(member)) {
-      throw new AppError("member must be an array", 400);
+  const {
+    clubName,
+    description,
+    category,
+    leaderId,
+    avatar,
+    memberCount,
+    status,
+  } = data;
+  await validateClubName(clubName);
+  // validate description (nhẹ, đúng style cũ)
+  if (description) {
+    if (typeof description !== "string") {
+      throw new AppError("description must be string", 400);
     }
-    for (let i = 0; i < member.length; i++) {
-      let x = member[i];
-      if (!x || typeof x !== "object") {
-        throw new AppError(`Typeof member not valid at index: ${i}`, 400);
-      }
-      if (!x.user) {
-        throw new AppError(
-          `user in array member is required at index: ${i}`,
-          400,
-        );
-      }
-      const user = await userModel.findById(x.user);
-      if (!user) {
-        throw new AppError(`Member user not found at index: ${i}`, 404);
-      }
-      if (
-        x.clubRole !== undefined &&
-        x.clubRole !== "member" &&
-        x.clubRole !== "vice-president" &&
-        x.clubRole !== "president"
-      ) {
-        throw new AppError(`clubRole not valid at index: ${i}`, 400);
-      }
+  }
+  //category
+  if (category) {
+    validateClubCategory(category);
+  }
+  //leaderId
+  await validateClubLeaderId(leaderId);
+  //avatar
+  if (avatar) {
+    if (typeof avatar !== "string") {
+      throw new AppError("Avatar must be string", 400);
     }
+  }
+  //memberCount
+  if (memberCount !== undefined) {
+    validateMemberCount(memberCount);
+  }
+  //status
+  if (status) {
+    validateClubStatus(status);
   }
 }
 
-const createClub = async (data) => {
+export const createClub = async (data) => {
   await validateInput(data);
 
-  const { clubName, member, description } = data; // ✅ thêm description
+  const {
+    clubName,
+    description,
+    category,
+    leaderId,
+    avatar,
+    memberCount,
+    status,
+  } = data;
 
   const club = await clubModel.create({
     clubName,
-    member,
-    description, // ✅ thêm vào DB
+    description,
+    category,
+    leaderId,
+    avatar,
+    memberCount,
+    status,
   });
 
   return club;
 };
+export const getClubs = async (page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
 
-const updateClubName = async (clubName, id) => {
-  if (!clubName) {
-    throw new AppError("missing updateData", 400);
-  }
-  if (!id) {
-    throw new AppError("missing id", 400);
-  }
+  const clubs = await clubModel
+    .find({ status: "active" })
+    .skip(skip)
+    .limit(limit);
 
-  if (typeof clubName !== "string") {
-    throw new AppError("typeof clubName invalid", 400);
-  }
-
-  const club = await clubModel.findByIdAndUpdate(
-    id,
-    { clubName },
-    { new: true },
-  );
-
-  if (!club) {
-    throw new AppError("Club not found", 404);
-  }
-
-  return club;
-};
-
-const updateMember = async (userId, clubId, index, clubRole) => {
-  if (!clubId || !userId || (index !== 0 && !index)) {
-    throw new AppError("data invalid", 400);
-  }
-
-  index = Number(index);
-
-  if (!Number.isInteger(index)) {
-    throw new AppError("invalid index", 400);
-  }
-
-  const club = await clubModel.findById(clubId);
-  if (!club) {
-    throw new AppError("Club not found", 404);
-  }
-
-  const user = await userModel.findById(userId);
-  if (!user) {
-    throw new AppError("UserId not found", 404);
-  }
-
-  if (club.member.length <= index || index < 0) {
-    throw new AppError("Invalid member index", 400);
-  }
-
-  for (let i = 0; i < club.member.length; i++) {
-    if (userId === club.member[i].user.toString()) {
-      if (i !== index) {
-        throw new AppError(
-          "club is not allowed to have two identical user IDs.",
-          409,
-        );
-      }
-    }
-  }
-
-  club.member[index].user = userId;
-
-  if (clubRole) {
-    if (
-      clubRole !== "member" &&
-      clubRole !== "vice-president" &&
-      clubRole !== "president"
-    ) {
-      throw new AppError("invalid clubRole", 400);
-    }
-    club.member[index].clubRole = clubRole;
-  }
-
-  await club.save();
-  return club;
-};
-
-const addMember = async (idUser, idClub, clubRole) => {
-  if (!idUser || !idClub) {
-    throw new AppError("idUser and idClub not null", 400);
-  }
-
-  const user = await userModel.findById(idUser);
-  if (!user) {
-    throw new AppError("User not found", 404);
-  }
-
-  const club = await clubModel.findById(idClub);
-  if (!club) {
-    throw new AppError("Club not found", 404);
-  }
-
-  if (
-    clubRole !== undefined &&
-    clubRole !== "member" &&
-    clubRole !== "vice-president" &&
-    clubRole !== "president"
-  ) {
-    throw new AppError("invalid clubRole", 400);
-  }
-
-  for (let i = 0; i < club.member.length; i++) {
-    if (club.member[i].user.toString() === idUser) {
-      throw new AppError("concide idUser", 409);
-    }
-  }
-
-  club.member.push({
-    user: idUser,
-    clubRole: clubRole,
+  const total = await clubModel.countDocuments({
+    status: "active",
   });
 
-  await club.save();
-  return club;
+  return {
+    clubs,
+    page,
+    limit,
+    pageNumber: Math.ceil(total / limit),
+    total,
+  };
 };
+export const getClubsByName = async (name, page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
 
-const deleteMember = async (idUser, idClub) => {
-  if (!idUser || !idClub) {
-    throw new AppError("idUser and idClub not null", 400);
+  const clubs = await clubModel
+    .find({
+      clubName: { $regex: name, $options: "i" },
+      status: "active",
+    })
+    .skip(skip)
+    .limit(limit);
+
+  const total = await clubModel.countDocuments({
+    clubName: { $regex: name, $options: "i" },
+    status: "active",
+  });
+
+  return {
+    clubs,
+    page,
+    limit,
+    pageNumber: Math.ceil(total / limit),
+    total,
+  };
+};
+export const getClubsByCategory = async (category, page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
+
+  const clubs = await clubModel
+    .find({
+      category,
+      status: "active",
+    })
+    .skip(skip)
+    .limit(limit);
+
+  const total = await clubModel.countDocuments({
+    category,
+    status: "active",
+  });
+
+  return {
+    clubs,
+    page,
+    limit,
+    pageNumber: Math.ceil(total / limit),
+    total,
+  };
+};
+export const getClubById = async (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError("Invalid clubId format", 400);
   }
 
-  const club = await clubModel.findById(idClub);
+  const club = await clubModel.findOne({
+    _id: id,
+    status: "active",
+  });
+
   if (!club) {
     throw new AppError("Club not found", 404);
   }
 
-  let find = false;
-
-  for (let i = 0; i < club.member.length; i++) {
-    if (idUser === club.member[i].user.toString()) {
-      find = true;
-      club.member.splice(i, 1);
-      break;
+  return club;
+};
+export const updateClub = async (data, id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError("Invalid clubId format", 400);
+  }
+  let updateData = {};
+  const club = await clubModel.findById(id);
+  if (!club) {
+    throw new AppError("Club not found", 404);
+  }
+  // 1. Update clubName
+  if (data.clubName) {
+    if (data.clubName !== club.clubName) {
+      await validateClubName(data.clubName);
+      updateData.clubName = data.clubName.trim();
     }
   }
 
-  if (!find) {
-    throw new AppError("idUser not found in club", 404);
+  // 2. Update description
+  if (data.description) {
+    if (typeof data.description !== "string") {
+      throw new AppError("description must be string", 400);
+    }
+    updateData.description = data.description.trim();
   }
 
+  // 3. Update category
+  if (data.category) {
+    validateClubCategory(data.category);
+    updateData.category = data.category.trim().toLowerCase();
+  }
+
+  // 4. Update leaderId
+  if (data.leaderId) {
+    await validateClubLeaderId(data.leaderId);
+    updateData.leaderId = data.leaderId;
+  }
+
+  // 5. Update avatar
+  if (data.avatar) {
+    if (typeof data.avatar !== "string") {
+      throw new AppError("avatar must be string", 400);
+    }
+    updateData.avatar = data.avatar;
+  }
+
+  // 6. Update memberCount
+  if (data.memberCount !== undefined) {
+    validateMemberCount(data.memberCount);
+    updateData.memberCount = data.memberCount;
+  }
+
+  // 7. Update status
+  if (data.status) {
+    validateClubStatus(data.status);
+    updateData.status = data.status.trim().toLowerCase();
+  }
+
+  Object.assign(club, updateData);
   await club.save();
   return club;
 };
+//xoa vinh vien club
+export const deleteClub = async (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError("Invalid clubId format", 400);
+  }
 
-export { createClub, updateClubName, updateMember, addMember, deleteMember };
+  const club = await clubModel.findByIdAndDelete(id);
+
+  if (!club) {
+    throw new AppError("Club not found", 404);
+  }
+
+  return {
+    message: `Club ${id} was permanently deleted`,
+  };
+};

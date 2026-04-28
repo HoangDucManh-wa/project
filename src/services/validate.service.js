@@ -2,6 +2,7 @@ import { userModel } from "../models/user.model.js";
 import AppError from "../utils/AppError.js";
 import { clubModel } from "../models/club.model.js";
 import validator from "validator";
+import mongoose from "mongoose";
 export const validateEmail = async (email) => {
   if (!validator.isEmail(email)) {
     throw new AppError("Invalid email", 400);
@@ -95,7 +96,68 @@ export const validateUserRole = (role) => {
   if (!role) {
     throw new AppError("invalid role", 400);
   }
-  if (role !== "student" && role !== "admin") {
-    throw new AppError("Role must be student or admin", 400);
+  if (role !== "student" && role !== "admin" && role !== "teacher") {
+    throw new AppError("Role must be student or admin or teacher", 400);
+  }
+};
+export const validateClubName = async (clubName) => {
+  if (!clubName) {
+    throw new AppError("clubName is required", 400);
+  }
+  if (typeof clubName !== "string") {
+    throw new AppError("Type of clubName must be string", 400);
+  }
+  const club = await clubModel.findOne({ clubName });
+  if (club) {
+    throw new AppError("clubName already existed", 400);
+  }
+};
+export const validateClubCategory = (category) => {
+  //không cần kiểm tra category có phải là null không, bởi trong service chỉ dùng hàm validateCategory khi category khác null
+  if (typeof category !== "string") {
+    throw new AppError("category must be string", 400);
+  }
+  if (
+    category !== "academic" &&
+    category !== "sports" &&
+    category !== "volunteer" &&
+    category !== "other"
+  ) {
+    throw new AppError("category invalid", 400);
+  }
+};
+export const validateClubLeaderId = async (leaderId) => {
+  if (!leaderId) {
+    throw new AppError("leaderId is required", 400);
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(leaderId)) {
+    throw new AppError("Invalid leaderId format", 400);
+  }
+
+  const user = await userModel.findById(leaderId);
+
+  if (!user || user.status !== "active") {
+    throw new AppError("Leader not found", 404);
+  }
+};
+export const validateMemberCount = (memberCount) => {
+  if (!Number.isInteger(memberCount)) {
+    throw new AppError("memberCount must be an integer", 400);
+  }
+
+  if (memberCount < 0) {
+    throw new AppError("memberCount cannot be less than 0", 400);
+  }
+};
+export const validateClubStatus = (status) => {
+  if (typeof status !== "string") {
+    throw new AppError("status must be string", 400);
+  }
+
+  const validStatuses = ["active", "inactive"];
+
+  if (!validStatuses.includes(status)) {
+    throw new AppError("status invalid", 400);
   }
 };

@@ -5,22 +5,42 @@ const clubSchema = new mongoose.Schema(
     clubName: {
       type: String,
       required: true,
+      trim: true,
+      unique: true,
     },
-    description: String,
-    member: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        clubRole: {
-          type: String,
-          enum: ["member", "vice-president", "president"],
-          default: "member",
-        },
-      },
-    ],
+
+    description: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    category: {
+      type: String,
+      enum: ["academic", "sports", "volunteer", "other"],
+      trim: true,
+    },
+
+    leaderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    avatar: {
+      type: String,
+    },
+
+    memberCount: {
+      type: Number,
+      default: 0,
+    },
+
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
   },
   {
     timestamps: true,

@@ -1,49 +1,34 @@
+import express from "express";
 import {
   createClubController,
-  updateClubNameController,
-  updateMemberController,
-  addMemberController,
-  deleteMemberController,
+  updateClubController,
+  deleteClubController,
+  getClubByIdController,
+  getClubsByCategoryController,
+  getClubsByNameController,
+  getClubsController,
 } from "../controllers/club.controller.js";
+
 import { verifyToken } from "../middlewares/auth.middleware.js";
 import { checkRole } from "../middlewares/authorization.middleware.js";
-import express from "express";
 
-const router = express.Router();
+const clubRouter = express.Router();
+clubRouter.get("/", verifyToken, getClubsController);
+clubRouter.get("/search/name", verifyToken, getClubsByNameController);
+clubRouter.get("/search/category", verifyToken, getClubsByCategoryController);
+clubRouter.get("/search/:id", verifyToken, getClubByIdController);
+//1. Create club (Admin only)
+clubRouter.post("/", verifyToken, checkRole("admin"), createClubController);
 
-router.post(
-  "/admin/createClub",
+//2. Update club (Admin only)
+clubRouter.put("/:id", verifyToken, checkRole("admin"), updateClubController);
+
+//3. Delete club permanently (Admin only)
+clubRouter.delete(
+  "/:id",
   verifyToken,
   checkRole("admin"),
-  createClubController,
+  deleteClubController,
 );
 
-router.put(
-  "/admin/updateClubName",
-  verifyToken,
-  checkRole("admin"),
-  updateClubNameController,
-);
-
-router.put(
-  "/admin/updateMember",
-  verifyToken,
-  checkRole("admin"),
-  updateMemberController,
-);
-
-router.post(
-  "/admin/addMember",
-  verifyToken,
-  checkRole("admin"),
-  addMemberController,
-);
-
-router.delete(
-  "/admin/deleteMember",
-  verifyToken,
-  checkRole("admin"),
-  deleteMemberController,
-);
-
-export default router;
+export default clubRouter;

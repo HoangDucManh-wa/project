@@ -1,95 +1,131 @@
 import {
   createClub,
-  updateClubName,
-  updateMember,
-  addMember,
-  deleteMember,
+  updateClub,
+  deleteClub,
+  getClubs,
+  getClubById,
+  getClubsByCategory,
+  getClubsByName,
 } from "../services/club.service.js";
 
+//1. Create club
 export const createClubController = async (req, res) => {
   try {
-    const club = await createClub(req.body);
+    const data = req.body;
+
+    const club = await createClub(data);
 
     return res.status(201).json({
       message: "create club successful",
-      club,
+      data: club,
     });
   } catch (err) {
     return res.status(err.status || 500).json({
-      message: "create club failed",
-      error: err.message,
+      message: err.message || "create club failed",
     });
   }
 };
-
-export const updateClubNameController = async (req, res) => {
+export const getClubsController = async (req, res) => {
   try {
-    const { clubName, id } = req.body;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    const club = await updateClubName(clubName, id);
+    const result = await getClubs(page, limit);
 
     return res.status(200).json({
-      message: "update clubName successful",
-      club,
+      message: "get clubs successful",
+      data: result,
     });
   } catch (err) {
     return res.status(err.status || 500).json({
-      message: "update clubName failed",
-      error: err.message,
+      message: err.message || "get clubs failed",
     });
   }
 };
-
-export const updateMemberController = async (req, res) => {
+export const getClubsByNameController = async (req, res) => {
   try {
-    const { userId, clubId, index, clubRole } = req.body;
+    const name = req.query.name;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    const club = await updateMember(userId, clubId, index, clubRole);
+    const result = await getClubsByName(name, page, limit);
 
     return res.status(200).json({
-      message: "update member successful",
-      club,
+      message: "search clubs by name successful",
+      data: result,
     });
   } catch (err) {
     return res.status(err.status || 500).json({
-      message: "update member failed",
-      error: err.message,
+      message: err.message || "search clubs failed",
     });
   }
 };
-
-export const addMemberController = async (req, res) => {
+export const getClubsByCategoryController = async (req, res) => {
   try {
-    const { idUser, idClub, clubRole } = req.body;
+    const category = req.query.category;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-    const club = await addMember(idUser, idClub, clubRole);
-
-    return res.status(201).json({
-      message: "add member successful",
-      club,
-    });
-  } catch (err) {
-    return res.status(err.status || 500).json({
-      message: "add member failed",
-      error: err.message,
-    });
-  }
-};
-
-export const deleteMemberController = async (req, res) => {
-  try {
-    const { idUser, idClub } = req.body;
-
-    const club = await deleteMember(idUser, idClub);
+    const result = await getClubsByCategory(category, page, limit);
 
     return res.status(200).json({
-      message: "delete member successful",
-      club,
+      message: "get clubs by category successful",
+      data: result,
     });
   } catch (err) {
     return res.status(err.status || 500).json({
-      message: "delete member failed",
-      error: err.message,
+      message: err.message || "get clubs by category failed",
+    });
+  }
+};
+export const getClubByIdController = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await getClubById(id);
+
+    return res.status(200).json({
+      message: "get club by id successful",
+      data: result,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({
+      message: err.message || "get club by id failed",
+    });
+  }
+};
+//2. Update club
+export const updateClubController = async (req, res) => {
+  try {
+    const data = req.body;
+    const id = req.params.id;
+
+    const club = await updateClub(data, id);
+
+    return res.status(200).json({
+      message: "update club successful",
+      data: club,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({
+      message: err.message || "update club failed",
+    });
+  }
+};
+
+//3. Delete club permanently
+export const deleteClubController = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await deleteClub(id);
+
+    return res.status(200).json({
+      message: result.message,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({
+      message: err.message || "delete club failed",
     });
   }
 };
