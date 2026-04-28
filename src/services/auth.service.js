@@ -3,7 +3,6 @@ import { createUser } from "./user.service.js";
 import { userModel } from "../models/user.model.js";
 import { sendEmail } from "./email.service.js";
 import { hashPassword } from "./user.service.js";
-
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 const createToken = (data) => {

@@ -7,7 +7,7 @@ async function validateInput(data) {
     throw new AppError("invalid data", 400);
   }
 
-  const { clubName, member } = data;
+  const { clubName, member, description } = data; // ✅ thêm description
 
   if (!clubName) {
     throw new AppError("clubName is required", 400);
@@ -15,6 +15,11 @@ async function validateInput(data) {
 
   if (typeof clubName !== "string") {
     throw new AppError("Type of clubName must be string", 400);
+  }
+
+  // ✅ validate description (nhẹ, đúng style cũ)
+  if (description !== undefined && typeof description !== "string") {
+    throw new AppError("description must be string", 400);
   }
 
   if (member !== undefined) {
@@ -50,8 +55,15 @@ async function validateInput(data) {
 
 const createClub = async (data) => {
   await validateInput(data);
-  const { clubName, member } = data;
-  const club = await clubModel.create({ clubName, member });
+
+  const { clubName, member, description } = data; // ✅ thêm description
+
+  const club = await clubModel.create({
+    clubName,
+    member,
+    description, // ✅ thêm vào DB
+  });
+
   return club;
 };
 

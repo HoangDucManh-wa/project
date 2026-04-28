@@ -1,28 +1,13 @@
 import {
-  createUser,
   createUserByAdmin,
-  getAllUsers,
+  getUsers,
   getUserById,
   getUserByName,
   updateUser,
   updateUserByAdmin,
   deleteUser,
+  lockUser,
 } from "../services/user.service.js";
-
-export const createUserController = async (req, res) => {
-  try {
-    const data = req.body;
-    const user = await createUser(data);
-    return res.status(201).json({
-      message: "create user successful",
-      data: user,
-    });
-  } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "create user failed",
-    });
-  }
-};
 
 export const createUserByAdminController = async (req, res) => {
   try {
@@ -40,13 +25,13 @@ export const createUserByAdminController = async (req, res) => {
   }
 };
 
-export const getAllUsersController = async (req, res) => {
+export const getUsersController = async (req, res) => {
   try {
     const data = req.query;
     const page = parseInt(data.page) || 1;
     const limit = parseInt(data.limit) || 10;
 
-    const users = await getAllUsers(page, limit);
+    const users = await getUsers(page, limit);
     return res.status(200).json({
       message: "get users successful",
       data: users,
@@ -62,13 +47,6 @@ export const getUserByIdController = async (req, res) => {
   try {
     const id = req.params.id;
     const user = await getUserById(id);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
     return res.status(200).json({
       message: "get user by id successful",
       data: user,
@@ -82,9 +60,11 @@ export const getUserByIdController = async (req, res) => {
 
 export const getUserByNameController = async (req, res) => {
   try {
-    const name = req.query.name;
-    const user = await getUserByName(name);
-
+    const data = req.query;
+    const name = data.name;
+    const page = data.page || 1;
+    const limit = data.limit || 20;
+    const user = await getUserByName(name, page, limit);
     return res.status(200).json({
       message: "get user by name successful",
       data: user,
@@ -99,7 +79,7 @@ export const getUserByNameController = async (req, res) => {
 export const updateUserController = async (req, res) => {
   try {
     const data = req.body;
-    const id = req.params.id;
+    const id = req.user.id; //lấy id của user ở req.user sau khi qua verifyToken
     const user = await updateUser(data, id);
 
     return res.status(200).json({
@@ -141,6 +121,19 @@ export const deleteUserController = async (req, res) => {
   } catch (err) {
     return res.status(err.status || 500).json({
       message: err.message || "delete user failed",
+    });
+  }
+};
+export const lockUserController = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const alert = await lockUser(id);
+    return res.status(200).json({
+      message: alert.message,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({
+      message: err.message || "lock user failed",
     });
   }
 };

@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import { userModel } from "../models/user.model.js";
-import { clubModel } from "../models/club.model.js";
 import {
   validateEmail,
   validatePassword,
@@ -14,15 +13,12 @@ const SALT_ROUNDS = 10;
 export async function hashPassword(plainText) {
   return await bcrypt.hash(plainText, SALT_ROUNDS);
 }
-//The function compares a plain password with a hashed password
-async function comparePassword(plainText, hashPassword) {
-  return await bcrypt.compare(plainText, hashPassword);
-}
+//validate input before creating a user
 const validateCreateInput = async (data) => {
   if (!data) {
     throw new AppError("Data is required", 400);
   }
-  let { name, email, password, studentId, clubs } = data;
+  let { name, email, password, university, studentId, avatar } = data;
   //1. check email
   await validateEmail(email);
   //2. Check name
@@ -33,20 +29,23 @@ const validateCreateInput = async (data) => {
   if (studentId) {
     validateStudentId(studentId);
   }
-  //5 check clubs
-  if (clubs) {
-    for (const x of clubs) {
-      const club = await clubModel.findById(x);
-      if (!club) {
-        throw new AppError("invalid club", 400);
-      }
+  //5 check avatar
+  if (avatar) {
+    if (typeof avatar !== "string") {
+      throw new AppError("The type of avatar must be string", 400);
+    }
+  }
+  //6 check university
+  if (university) {
+    if (typeof university !== "string") {
+      throw new AppError("university must be string", 400);
     }
   }
 };
 //1.The function creates users
 export const createUser = async (data) => {
   await validateCreateInput(data);
-  const { name, email, password, studentId, university } = data;
+  const { name, email, password, studentId, university, avatar } = data;
   const hashedPassword = await hashPassword(password);
   const user = await userModel.create({
     name,
@@ -55,7 +54,8 @@ export const createUser = async (data) => {
     studentId,
     university,
     role: "student",
-    clubs: [],
+    status: "active",
+    avatar,
   });
   const { password: _, ...safeData } = user.toObject();
   return safeData;
@@ -64,7 +64,7 @@ export const createUser = async (data) => {
 export const createUserByAdmin = async (data, role) => {
   await validateCreateInput(data);
   validateUserRole(role);
-  const { name, email, password, studentId, university, clubs } = data;
+  const { name, email, password, studentId, university, avatar } = data;
   const hashedPassword = await hashPassword(password);
   const user = await userModel.create({
     name,
@@ -73,20 +73,21 @@ export const createUserByAdmin = async (data, role) => {
     studentId,
     university,
     role: role,
-    clubs,
+    status: "active",
+    avatar,
   });
   const { password: _, ...safeData } = user.toObject();
   return safeData;
 };
 //2. get a number of users
-export const getAllUsers = async (page = 1, limit = 10) => {
+export const getUsers = async (page = 1, limit = 10) => {
   let skip = (page - 1) * limit;
   const users = await userModel
-    .find()
+    .find({ status: "active" })
     .select("-password")
     .skip(skip)
     .limit(limit);
-  const total = await userModel.countDocuments();
+  const total = await userModel.countDocuments({ status: "active" });
   return {
     users,
     page,
@@ -96,14 +97,22 @@ export const getAllUsers = async (page = 1, limit = 10) => {
 };
 //3 get user by Id
 export const getUserById = async (id) => {
-  const user = await userModel.findById(id).select("-password");
+  const user = await userModel
+    .findOne({ _id: id, status: "active" })
+    .select("-password");
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
   return user;
 };
 //4 get users by name
-export const getUserByName = async (name) => {
+export const getUserByName = async (name, page = 1, limit = 20) => {
+  const skip = (page - 1) * limit;
   const users = await userModel
-    .find({ name: { $regex: name, $options: "i" } })
-    .select("-password");
+    .find({ name: { $regex: name, $options: "i" }, status: "active" })
+    .select("-password")
+    .skip(skip)
+    .limit(limit);
   return users;
 };
 //5. update user
@@ -114,7 +123,7 @@ export const updateUser = async (data, id) => {
     updateData.name = data.name;
   }
   if (data.email) {
-    validateEmail(data.email);
+    await validateEmail(data.email);
     updateData.email = data.email;
   }
   if (data.password) {
@@ -122,17 +131,23 @@ export const updateUser = async (data, id) => {
     updateData.password = await hashPassword(data.password);
   }
 
-  // ✅ thêm studentId
   if (data.studentId) {
     validateStudentId(data.studentId);
     updateData.studentId = data.studentId;
   }
 
-  // ✅ thêm university
   if (data.university) {
+    if (typeof data.university !== "string") {
+      throw new AppError("university must be string", 400);
+    }
     updateData.university = data.university;
   }
-
+  if (data.avatar) {
+    if (typeof data.avatar !== "string") {
+      throw new AppError("avatar must be string", 400);
+    }
+    updateData.avatar = data.avatar;
+  }
   const user = await userModel.findByIdAndUpdate(
     id,
     {
@@ -155,7 +170,7 @@ export const updateUserByAdmin = async (data, id) => {
   }
 
   if (data.email) {
-    validateEmail(data.email);
+    await validateEmail(data.email);
     updateData.email = data.email;
   }
 
@@ -170,26 +185,29 @@ export const updateUserByAdmin = async (data, id) => {
   }
 
   if (data.university) {
+    if (typeof data.university !== "string") {
+      throw new AppError("university must be string");
+    }
     updateData.university = data.university;
   }
-
-  // ✅ admin được update role
+  if (data.avatar) {
+    if (typeof data.avatar !== "string") {
+      throw new AppError("avatar must be string", 400);
+    }
+    updateData.avatar = data.avatar;
+  }
+  //Only admins can update roles.
   if (data.role) {
     validateUserRole(data.role);
     updateData.role = data.role;
   }
-
-  // ✅ admin được update clubs
-  if (data.clubs) {
-    for (const x of data.clubs) {
-      const club = await clubModel.findById(x);
-      if (!club) {
-        throw new AppError("invalid club", 400);
-      }
+  //Only admins can update status
+  if (data.status) {
+    if (data.status !== "active" && data.status !== "banned") {
+      throw new AppError("status invalid", 400);
     }
-    updateData.clubs = data.clubs;
+    updateData.status = data.status;
   }
-
   const user = await userModel.findByIdAndUpdate(
     id,
     {
@@ -205,10 +223,29 @@ export const updateUserByAdmin = async (data, id) => {
   const { password: _, ...safeData } = user.toObject();
   return safeData;
 };
+//permanently delete the user
 export const deleteUser = async (id) => {
   const user = await userModel.findByIdAndDelete(id);
   if (!user) {
     throw new AppError("User not found", 404);
   }
   return { message: `User ${id} was deleted` };
+};
+//Temporarily lock the user's account.
+export const lockUser = async (id) => {
+  const user = await userModel.findByIdAndUpdate(
+    id,
+    {
+      $set: { status: "banned" },
+    },
+    { new: true },
+  );
+
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+
+  return {
+    message: `User ${id} was locked`,
+  };
 };
