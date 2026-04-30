@@ -76,7 +76,7 @@ export const createClub = async (data) => {
 
   return club;
 };
-export const getClubs = async (page = 1, limit = 10) => {
+export const getClubs = async ({ page = 1, limit = 10 }) => {
   const skip = (page - 1) * limit;
 
   const clubs = await clubModel
@@ -96,7 +96,7 @@ export const getClubs = async (page = 1, limit = 10) => {
     total,
   };
 };
-export const getClubsByName = async (name, page = 1, limit = 10) => {
+export const getClubsByName = async ({ name, page = 1, limit = 10 }) => {
   const skip = (page - 1) * limit;
 
   const clubs = await clubModel
@@ -120,7 +120,11 @@ export const getClubsByName = async (name, page = 1, limit = 10) => {
     total,
   };
 };
-export const getClubsByCategory = async (category, page = 1, limit = 10) => {
+export const getClubsByCategory = async ({
+  category,
+  page = 1,
+  limit = 10,
+}) => {
   const skip = (page - 1) * limit;
 
   const clubs = await clubModel
@@ -160,7 +164,7 @@ export const getClubById = async (id) => {
 
   return club;
 };
-export const updateClub = async (data, id) => {
+export const updateClub = async ({ data, id }) => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new AppError("Invalid clubId format", 400);
   }

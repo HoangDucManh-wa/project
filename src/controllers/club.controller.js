@@ -30,7 +30,7 @@ export const getClubsController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    const result = await getClubs(page, limit);
+    const result = await getClubs({ page, limit });
 
     return res.status(200).json({
       message: "get clubs successful",
@@ -48,7 +48,7 @@ export const getClubsByNameController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    const result = await getClubsByName(name, page, limit);
+    const result = await getClubsByName({ name, page, limit });
 
     return res.status(200).json({
       message: "search clubs by name successful",
@@ -56,7 +56,8 @@ export const getClubsByNameController = async (req, res) => {
     });
   } catch (err) {
     return res.status(err.status || 500).json({
-      message: err.message || "search clubs failed",
+      message: "search clubs by name failed",
+      error: err.message,
     });
   }
 };
@@ -66,7 +67,7 @@ export const getClubsByCategoryController = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    const result = await getClubsByCategory(category, page, limit);
+    const result = await getClubsByCategory({ category, page, limit });
 
     return res.status(200).json({
       message: "get clubs by category successful",
@@ -100,7 +101,7 @@ export const updateClubController = async (req, res) => {
     const data = req.body;
     const id = req.params.id;
 
-    const club = await updateClub(data, id);
+    const club = await updateClub({ data, id });
 
     return res.status(200).json({
       message: "update club successful",
