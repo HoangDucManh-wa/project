@@ -44,7 +44,7 @@ const activitySchema = new mongoose.Schema(
 
     tags: [String], // Ví dụ: ["tech", "sport"] để filter
   },
-  { timestamps: true }, // Tự động thêm createdAt, updatedAt
+  { timestamps: true },
 );
 
 export const activityModel = mongoose.model("Activity", activitySchema);
