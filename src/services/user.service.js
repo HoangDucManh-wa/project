@@ -45,7 +45,7 @@ const validateCreateInput = async (data) => {
 //1.The function creates users
 export const createUser = async (data) => {
   await validateCreateInput(data);
-  const { name, email, password, studentId, university, avatar, role } = data;
+  let { name, email, password, studentId, university, avatar, role } = data;
   if (role !== "student" && role !== "teacher") {
     role = "student";
   }

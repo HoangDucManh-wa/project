@@ -8,6 +8,7 @@ export const registerController = async (req, res) => {
   try {
     const data = req.body;
     const registerData = await register(data);
+    console.log(registerData);
     const { user, token } = registerData;
     res.cookie("token", token, {
       httpOnly: true,
@@ -43,6 +44,7 @@ export const loginController = async (req, res) => {
       user,
     });
   } catch (err) {
+    console.log(err.message);
     return res.status(401).json({
       message: "login failed",
       error: err.message,

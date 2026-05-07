@@ -4,47 +4,68 @@ const activitySchema = new mongoose.Schema(
   {
     activityName: {
       type: String,
-      required: true, // Tên sự kiện / hoạt động (bắt buộc)
+      required: true,
+      trim: true,
     },
 
-    description: String, // Mô tả chi tiết (nên có để user hiểu nội dung)
+    description: {
+      type: String,
+      default: "",
+    },
 
     type: {
       type: String,
-      enum: ["event", "competition"], // Loại hoạt động
+      enum: ["event", "competition"],
       default: "event",
     },
 
-    startTime: Date, // Thời gian bắt đầu (quan trọng để hiển thị)
-    endTime: Date, // Thời gian kết thúc
+    startTime: {
+      type: Date,
+      required: true,
+    },
 
-    location: String, // Địa điểm (offline) hoặc link (online)
+    endTime: {
+      type: Date,
+      required: true,
+    },
 
-    image: String, // Ảnh banner (phục vụ UI/UX)
+    location: {
+      type: String,
+      default: "",
+    },
+
+    image: {
+      type: String,
+      default: "",
+    },
 
     organizer: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Người hoặc CLB tổ chức
+      ref: "User",
+      required: true,
     },
 
-    participants: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User", // Danh sách người tham gia
-      },
-    ],
-
-    maxParticipants: Number, // Giới hạn số người tham gia
+    maxParticipants: {
+      type: Number,
+      default: 0,
+    },
 
     status: {
       type: String,
-      enum: ["upcoming", "ongoing", "ended"], // Trạng thái hoạt động
+      enum: ["upcoming", "ongoing", "ended"],
       default: "upcoming",
     },
 
-    tags: [String], // Ví dụ: ["tech", "sport"] để filter
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
 
-export const activityModel = mongoose.model("Activity", activitySchema);
+export const Activity = mongoose.model("Activity", activitySchema);

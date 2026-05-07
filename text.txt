@@ -12,7 +12,14 @@
     "studentId": "23020834",
     "university": "UET",
     "role": "student",
-
+{
+  "name": "Dinh Thanh Long",
+    "email": "longsex123@gmail.com",
+    "password": "Longsex123A@"
+        "studentId": "23020834",
+    "university": "UET",
+    "role": "student",
+}
   {
   "message": "create club successful",
   "club": {
