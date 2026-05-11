@@ -4,7 +4,7 @@ import routerAuth from "./routers/auth.route.js";
 import routerClub from "./routers/club.route.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-
+import membershipRouter from "./routers/membership.route.js";
 const app = express();
 app.use(
   cors({
@@ -18,4 +18,5 @@ app.use(cookieParser());
 app.use(`${baseURL}/user`, routerUse);
 app.use(`${baseURL}/auth`, routerAuth);
 app.use(`${baseURL}/club`, routerClub);
+app.use(`${baseURL}/membership`, membershipRouter);
 export default app;
