@@ -34,18 +34,18 @@ export const leaveClubService = async (userId, clubId) => {
 };
 
 export const getClubMembersService = async (clubId) => {
-  const members = await Membership.find({
+  const memberships = await Membership.find({
     club: clubId,
   }).populate("user", "name studentId avatar");
-
+  const members = memberships.map((x) => x.user);
   return members;
 };
 
 export const getUserClubsService = async (userId) => {
-  const clubs = await Membership.find({
+  const memberships = await Membership.find({
     user: userId,
   }).populate("club");
-
+  const clubs = memberships.map((x) => x.club);
   return clubs;
 };
 export const updateMemberRoleByAdminService = async ({
@@ -69,10 +69,10 @@ export const updateMemberRoleByAdminService = async ({
   return membership;
 };
 export const deleteMemberByAdminService = async (clubId, memberId) => {
-  const deletedMember = await Membership.findOneAndDelete({
+  const membership = await Membership.findOneAndDelete({
     club: clubId,
     user: memberId,
   });
 
-  return deletedMember;
+  return membership;
 };

@@ -91,7 +91,7 @@ export const updateMemberRoleByAdminController = async (req, res) => {
     const memberId = req.params.memberId;
     const { roleInClub } = req.body;
 
-    const updatedMember = await updateMemberRoleByAdminService({
+    const membership = await updateMemberRoleByAdminService({
       clubId,
       memberId,
       roleInClub,
@@ -99,7 +99,7 @@ export const updateMemberRoleByAdminController = async (req, res) => {
 
     return res.status(200).json({
       message: "update member role successful",
-      data: updatedMember,
+      data: membership,
     });
   } catch (err) {
     return res.status(err.status || 500).json({
@@ -114,11 +114,11 @@ export const deleteMemberByAdminController = async (req, res) => {
     const clubId = req.params.clubId;
     const memberId = req.params.memberId;
 
-    const deletedMember = await deleteMemberByAdminService(clubId, memberId);
+    const membership = await deleteMemberByAdminService(clubId, memberId);
 
     return res.status(200).json({
       message: "delete member successful",
-      data: deletedMember,
+      data: membership,
     });
   } catch (err) {
     return res.status(err.status || 500).json({
