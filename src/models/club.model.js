@@ -35,7 +35,10 @@ const clubSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-
+    maxMemberCount: {
+      type: Number,
+      default: 100,
+    },
     status: {
       type: String,
       enum: ["active", "inactive"],

@@ -1,6 +1,6 @@
 import { Membership } from "../models/membership.model.js";
 import AppError from "../utils/AppError.js";
-
+import { getClubById, updateClub } from "./club.service.js";
 export const joinClubService = async ({ userId, clubId }) => {
   const existingMembership = await Membership.findOne({
     user: userId,
@@ -10,7 +10,20 @@ export const joinClubService = async ({ userId, clubId }) => {
   if (existingMembership) {
     throw new AppError("You already joined this club", 400);
   }
-
+  const club = await getClubById(clubId);
+  let { memberCount, maxMemberCount } = club;
+  if (memberCount >= maxMemberCount) {
+    throw new AppError(
+      "The total number of club members has reached its maximum ",
+      400,
+    );
+  }
+  await updateClub({
+    data: {
+      memberCount: memberCount + 1,
+    },
+    id: clubId,
+  });
   const membership = await Membership.create({
     user: userId,
     club: clubId,
@@ -25,10 +38,18 @@ export const leaveClubService = async (userId, clubId) => {
     user: userId,
     club: clubId,
   });
-
   if (!membership) {
     throw new AppError("Membership not found", 404);
   }
+  const club = await getClubById(clubId);
+  let { memberCount } = club;
+  memberCount--;
+  await updateClub({
+    data: {
+      memberCount,
+    },
+    id: clubId,
+  });
 
   return membership;
 };

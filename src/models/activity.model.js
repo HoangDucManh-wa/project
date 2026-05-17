@@ -47,7 +47,7 @@ const activitySchema = new mongoose.Schema(
 
     maxParticipants: {
       type: Number,
-      default: 0,
+      default: 100,
     },
 
     status: {
@@ -55,7 +55,10 @@ const activitySchema = new mongoose.Schema(
       enum: ["upcoming", "ongoing", "ended"],
       default: "upcoming",
     },
-
+    participantsNumber: {
+      type: Number,
+      default: 0,
+    },
     tags: [
       {
         type: String,

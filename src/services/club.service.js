@@ -173,7 +173,7 @@ export const updateClub = async ({ data, id }) => {
   if (!club) {
     throw new AppError("Club not found", 404);
   }
-  console.log(data);
+
   // 1. Update clubName
   if (data.clubName) {
     if (data.clubName !== club.clubName) {
