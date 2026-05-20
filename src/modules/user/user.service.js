@@ -1,13 +1,13 @@
 import bcrypt from "bcrypt";
-import { userModel } from "../models/user.model.js";
+import { userModel } from "./user.model.js";
 import {
   validateEmail,
   validatePassword,
   validateStudentId,
   validateUserName,
   validateUserRole,
-} from "./validate.service.js";
-import AppError from "../utils/AppError.js";
+} from "../../shared/services/validate.service.js";
+import AppError from "../../shared/utils/AppError.js";
 //The function hashs password
 const SALT_ROUNDS = 10;
 export async function hashPassword(plainText) {

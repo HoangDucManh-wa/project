@@ -7,7 +7,7 @@ import {
   updateUserByAdmin,
   deleteUser,
   lockUser,
-} from "../services/user.service.js";
+} from "./user.service.js";
 
 export const createUserByAdminController = async (req, res) => {
   try {

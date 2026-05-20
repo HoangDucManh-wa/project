@@ -6,7 +6,7 @@ import {
   getClubById,
   getClubsByCategory,
   getClubsByName,
-} from "../services/club.service.js";
+} from "./club.service.js";
 
 //1. Create club
 export const createClubController = async (req, res) => {

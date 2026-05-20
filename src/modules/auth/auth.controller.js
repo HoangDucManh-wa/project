@@ -3,7 +3,7 @@ import {
   login,
   forgotPassword,
   updatePassword,
-} from "../services/auth.service.js";
+} from "./auth.service.js";
 export const registerController = async (req, res) => {
   try {
     const data = req.body;

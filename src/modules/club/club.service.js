@@ -1,12 +1,12 @@
-import { clubModel } from "../models/club.model.js";
-import AppError from "../utils/AppError.js";
+import { clubModel } from "./club.model.js";
+import AppError from "../../shared/utils/AppError.js";
 import {
   validateClubName,
   validateClubCategory,
   validateClubLeaderId,
   validateMemberCount,
   validateClubStatus,
-} from "./validate.service.js";
+} from "../../shared/services/validate.service.js";
 import mongoose from "mongoose";
 async function validateInput(data) {
   if (!data) {

@@ -1,6 +1,6 @@
-import { Membership } from "../models/membership.model.js";
-import AppError from "../utils/AppError.js";
-import { getClubById, updateClub } from "./club.service.js";
+import { Membership } from "./membership.model.js";
+import AppError from "../../shared/utils/AppError.js";
+import { getClubById, updateClub } from "../club/club.service.js";
 export const joinClubService = async ({ userId, clubId }) => {
   const existingMembership = await Membership.findOne({
     user: userId,

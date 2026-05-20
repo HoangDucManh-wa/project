@@ -1,8 +1,8 @@
-import { jwtConfig } from "../configs/jwt.js";
-import { createUser } from "./user.service.js";
-import { userModel } from "../models/user.model.js";
-import { sendEmail } from "./email.service.js";
-import { hashPassword } from "./user.service.js";
+import { jwtConfig } from "../../configs/jwt.js";
+import { createUser } from "../user/user.service.js";
+import { userModel } from "../user/user.model.js";
+import { sendEmail } from "../../shared/services/email.service.js";
+import { hashPassword } from "../user/user.service.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 const createToken = (data) => {

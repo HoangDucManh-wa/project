@@ -7,10 +7,10 @@ import {
   updateUserByAdminController,
   deleteUserController,
   lockUserController,
-} from "../controllers/user.controller.js";
-import { verifyToken } from "../middlewares/auth.middleware.js";
+} from "./user.controller.js";
+import { verifyToken } from "../../shared/middlewares/auth.middleware.js";
 import express from "express";
-import { checkRole } from "../middlewares/authorization.middleware.js";
+import { checkRole } from "../../shared/middlewares/authorization.middleware.js";
 const router = express.Router();
 
 router.get("/", verifyToken, getUsersController);

@@ -1,10 +1,10 @@
 import express from "express";
-import routerUse from "./routers/user.route.js";
-import routerAuth from "./routers/auth.route.js";
-import routerClub from "./routers/club.route.js";
+import routerUse from "./modules/user/user.route.js";
+import routerAuth from "./modules/auth/auth.route.js";
+import routerClub from "./modules/club/club.route.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import membershipRouter from "./routers/membership.route.js";
+import membershipRouter from "./modules/membership/membership.route.js";
 const app = express();
 app.use(
   cors({

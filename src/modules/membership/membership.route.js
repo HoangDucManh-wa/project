@@ -7,10 +7,10 @@ import {
   getUserClubsController,
   updateMemberRoleByAdminController,
   deleteMemberByAdminController,
-} from "../controllers/membership.controller.js";
+} from "./membership.controller.js";
 
-import { verifyToken } from "../middlewares/auth.middleware.js";
-import { checkRole } from "../middlewares/authorization.middleware.js";
+import { verifyToken } from "../../shared/middlewares/auth.middleware.js";
+import { checkRole } from "../../shared/middlewares/authorization.middleware.js";
 
 const membershipRouter = express.Router();
 

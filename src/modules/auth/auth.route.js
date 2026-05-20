@@ -5,8 +5,8 @@ import {
   forgotPasswordController,
   updatePasswordController,
   logoutController,
-} from "../controllers/auth.controller.js";
-import { verifyToken } from "../middlewares/auth.middleware.js";
+} from "./auth.controller.js";
+import { verifyToken } from "../../shared/middlewares/auth.middleware.js";
 import express from "express";
 const router = express.Router();
 

@@ -1,6 +1,6 @@
-import { userModel } from "../models/user.model.js";
+import { userModel } from "../../modules/user/user.model.js";
 import AppError from "../utils/AppError.js";
-import { clubModel } from "../models/club.model.js";
+import { clubModel } from "../../modules/club/club.model.js";
 import validator from "validator";
 import mongoose from "mongoose";
 export const validateEmail = async (email) => {

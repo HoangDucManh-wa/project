@@ -7,10 +7,10 @@ import {
   getClubsByCategoryController,
   getClubsByNameController,
   getClubsController,
-} from "../controllers/club.controller.js";
+} from "./club.controller.js";
 
-import { verifyToken } from "../middlewares/auth.middleware.js";
-import { checkRole } from "../middlewares/authorization.middleware.js";
+import { verifyToken } from "../../shared/middlewares/auth.middleware.js";
+import { checkRole } from "../../shared/middlewares/authorization.middleware.js";
 
 const clubRouter = express.Router();
 clubRouter.get("/", verifyToken, getClubsController);

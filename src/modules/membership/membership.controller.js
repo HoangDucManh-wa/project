@@ -5,7 +5,7 @@ import {
   getUserClubsService,
   updateMemberRoleByAdminService,
   deleteMemberByAdminService,
-} from "../services/membership.service.js";
+} from "./membership.service.js";
 
 //1. Join club
 export const joinClubController = async (req, res) => {

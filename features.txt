@@ -1,0 +1,31 @@
+Features
+
+User Roles
+- Student, Teacher, Admin
+
+Authentication
+- Login / Register
+- Role-based access
+
+Club System
+- Discover clubs by category or name
+- View club information and members
+- Join / leave clubs
+- Follow club updates
+
+Activity System
+- View upcoming activities and events
+- Search activities by category or name
+- Join / leave activities
+- Activity reminders & notification bell
+
+Interaction
+- Real-time notifications
+- Club announcements
+- Personalized dashboard
+
+Admin Management
+- Manage clubs, activities, and users
+- Approve or remove content
+- System statistics overview
+
