@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { jwtConfig } from "../../configs/jwt.js";
-import { userModel } from "../../modules/user/user.model.js";
+import { UserModel } from "../../modules/user/user.model.js";
 export const verifyToken = async (req, res, next) => {
   const token = req.cookies.token;
 
@@ -13,7 +13,7 @@ export const verifyToken = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, jwtConfig.secret);
 
-    const user = await userModel.findById(decoded.userId).select("-password");
+    const user = await UserModel.findById(decoded.userId).select("-password");
 
     if (!user) {
       return res.status(401).json({

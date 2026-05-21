@@ -29,16 +29,48 @@ const clubSchema = new mongoose.Schema(
 
     avatar: {
       type: String,
+      default: "",
+    },
+
+    // bổ sung
+    university: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+
+    socialLinks: {
+      facebook: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+
+      website: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+    },
+
+    // bổ sung
+    stats: {
+      posts: {
+        type: Number,
+        default: 0,
+      },
     },
 
     memberCount: {
       type: Number,
       default: 0,
     },
+
     maxMemberCount: {
       type: Number,
       default: 100,
     },
+
     status: {
       type: String,
       enum: ["active", "inactive"],

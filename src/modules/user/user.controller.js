@@ -1,5 +1,6 @@
 import {
   createUserByAdmin,
+  getCurrentUser,
   getUsers,
   getUserById,
   getUserByName,
@@ -7,6 +8,7 @@ import {
   updateUserByAdmin,
   deleteUser,
   lockUser,
+  unlockUser,
 } from "./user.service.js";
 
 export const createUserByAdminController = async (req, res) => {
@@ -54,6 +56,21 @@ export const getUserByIdController = async (req, res) => {
   } catch (err) {
     return res.status(err.status || 500).json({
       message: err.message || "get user by id failed",
+    });
+  }
+};
+
+export const getCurrentUserController = async (req, res) => {
+  try {
+    const id = req.user.id;
+    const user = await getCurrentUser(id);
+    return res.status(200).json({
+      message: "get current user successful",
+      data: user,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({
+      message: err.message || "get current user failed",
     });
   }
 };
@@ -134,6 +151,20 @@ export const lockUserController = async (req, res) => {
   } catch (err) {
     return res.status(err.status || 500).json({
       message: err.message || "lock user failed",
+    });
+  }
+};
+
+export const unlockUserController = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const alert = await unlockUser(id);
+    return res.status(200).json({
+      message: alert.message,
+    });
+  } catch (err) {
+    return res.status(err.status || 500).json({
+      message: err.message || "unlock user failed",
     });
   }
 };

@@ -1,4 +1,4 @@
-import { userModel } from "../../modules/user/user.model.js";
+import { UserModel } from "../../modules/user/user.model.js";
 import AppError from "../utils/AppError.js";
 import { clubModel } from "../../modules/club/club.model.js";
 import validator from "validator";
@@ -7,7 +7,7 @@ export const validateEmail = async (email) => {
   if (!validator.isEmail(email)) {
     throw new AppError("Invalid email", 400);
   }
-  const user = await userModel.findOne({ email });
+  const user = await UserModel.findOne({ email });
   if (user) {
     throw new AppError("Email already existed", 409);
   }
@@ -135,7 +135,7 @@ export const validateClubLeaderId = async (leaderId) => {
     throw new AppError("Invalid leaderId format", 400);
   }
 
-  const user = await userModel.findById(leaderId);
+  const user = await UserModel.findById(leaderId);
 
   if (!user || user.status !== "active") {
     throw new AppError("Leader not found", 404);

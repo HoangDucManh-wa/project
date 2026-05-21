@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    // =========================
+    // Basic Identity
+    // =========================
     name: {
       type: String,
       required: true,
@@ -20,22 +23,143 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // Allows null studentId and duplicate values across different universities.
+
     studentId: {
       type: String,
       trim: true,
+      default: null,
     },
 
+    // =========================
+    // Profile
+    // =========================
+    avatarUrl: {
+      type: String,
+      default: "",
+    },
+
+    coverUrl: {
+      type: String,
+      default: "",
+    },
+
+    bio: {
+      type: String,
+      default: "",
+      maxlength: 500,
+    },
+
+    age: {
+      type: Number,
+      min: 0,
+    },
+
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+    },
+
+    relationshipStatus: {
+      type: String,
+      enum: ["single", "in_relationship", "married"],
+    },
+
+    // =========================
+    // Academic Information
+    // =========================
     university: {
       type: String,
       trim: true,
     },
 
-    avatar: {
+    major: {
       type: String,
-      default: "",
+      trim: true,
     },
 
+    academicYear: {
+      type: Number,
+    },
+
+    // =========================
+    // Career
+    // =========================
+    careerPaths: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    techStacks: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    skills: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    interests: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    // =========================
+    // Social Links
+    // =========================
+    socialLinks: {
+      github: {
+        type: String,
+        default: "",
+      },
+
+      linkedin: {
+        type: String,
+        default: "",
+      },
+
+      portfolio: {
+        type: String,
+        default: "",
+      },
+
+      facebook: {
+        type: String,
+        default: "",
+      },
+    },
+
+    // =========================
+    // Platform Stats
+    // =========================
+    stats: {
+      followers: {
+        type: Number,
+        default: 0,
+      },
+
+      following: {
+        type: Number,
+        default: 0,
+      },
+
+      posts: {
+        type: Number,
+        default: 0,
+      },
+    },
+
+    // =========================
+    // System Fields
+    // =========================
     role: {
       type: String,
       enum: ["student", "teacher", "admin"],
@@ -48,13 +172,29 @@ const userSchema = new mongoose.Schema(
       default: "active",
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+  },
 );
 
-// Compound unique index
+// =====================================
+// Indexes
+// =====================================
+
+// Student ID is only unique inside a university
 userSchema.index(
   { studentId: 1, university: 1 },
   { unique: true, sparse: true },
 );
 
-export const userModel = mongoose.model("User", userSchema);
+// Text search
+userSchema.index({
+  name: "text",
+  bio: "text",
+  interests: "text",
+  techStacks: "text",
+  skills: "text",
+});
+
+// Export model
+export const UserModel = mongoose.model("User", userSchema);
