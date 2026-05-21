@@ -4,6 +4,6 @@ await connect();
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(
-    `server is running on http://localhost:${port}/api/student-portal`,
+    `server is running on http://localhost:${port}/api/student-ecosystem`,
   );
 });
