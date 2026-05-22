@@ -3,101 +3,102 @@ import AppError from "../utils/AppError.js";
 import { clubModel } from "../../modules/club/club.model.js";
 import validator from "validator";
 import mongoose from "mongoose";
-export const validateEmail = async (email) => {
-  if (!validator.isEmail(email)) {
-    throw new AppError("Invalid email", 400);
-  }
-  const user = await UserModel.findOne({ email });
-  if (user) {
-    throw new AppError("Email already existed", 409);
-  }
-};
-export const validatePassword = (password) => {
-  if (!password) {
-    throw new AppError("Password is required", 400);
-  }
-  if (typeof password !== "string") {
-    throw new AppError("Password must be a string", 400);
-  }
-  let lengthPassword = password.length;
-  //3.1 Check lenght of password
-  if (lengthPassword < 8) {
-    throw new AppError("Password must be at least 8 characters long", 400);
-  }
-  if (lengthPassword > 32) {
-    throw new AppError("Password must not exceed 32 characters", 400);
-  }
-  //3.2 Check so chu cai thuong,in hoa, so, va ky tu dac biet
-  let a = 0,
-    b = 0,
-    c = 0,
-    d = 0;
-  for (let i = 0; i < lengthPassword; i++) {
-    if (password[i] >= "a" && password[i] <= "z") {
-      a++;
-    } else if (password[i] >= "0" && password[i] <= "9") {
-      b++;
-    } else if (password[i] >= "A" && password[i] <= "Z") {
-      c++;
-    } else {
-      d++;
+export const validateStringField = (field, data, required = false) => {
+  if (data === null || data === undefined) {
+    if (required) {
+      throw new AppError(`{field} is required`, 400);
     }
+    return;
   }
-  if (!(a && b && c && d)) {
-    throw new AppError(
-      "Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character",
-      400,
-    );
+  if (typeof data !== "string") {
+    throw new AppError(`${field} must be string`, 400);
   }
-  //3.3 check space
-  for (let i = 0; i < lengthPassword; i++) {
-    if (password[i] === " ") {
-      throw new AppError("Password must not contain spaces", 400);
+  if (data.trim() === "") {
+    if (required) {
+      throw new AppError(`{field} is required`, 400);
     }
   }
 };
-export const validateStudentId = (studentId) => {
-  if (!studentId) {
-    throw new AppError("invalid studentId", 400);
+//Only operate correctly if we make sure that data is string
+export const validateStringLength = (field, data, min = 0, max = 100) => {
+  let length = data.length;
+  if (length < min) {
+    throw new AppError(`${field} must ne at least ${min} characters long`, 400);
   }
-  if (typeof studentId !== "string") {
-    throw new AppError("studentId must be a string", 400);
+  if (length > max) {
+    throw new AppError(`${field} must ne at max ${max} characters long`, 400);
   }
-  if (studentId.includes(" ")) {
-    throw new AppError("studentId must not contain spaces", 400);
+};
+export const validateEnumField = (field, arr = [], enumData = []) => {
+  if (arr.length === 0) {
+    throw new AppError(`invalid ${field}`, 400);
   }
-  for (let i = 0; i < studentId.length; i++) {
-    if (!(studentId[i] >= "0" && studentId[i] <= "9")) {
-      throw new AppError("invalid studentId", 400);
+  arr.forEach((x) => {
+    if (!enumData.includes(x)) {
+      throw new AppError(`${field} only contains ${array.join(", ")}`, 400);
     }
+  });
+};
+export const validateNumberField = (
+  field,
+  data,
+  min = 0,
+  max = 100,
+  required = false,
+) => {
+  if (data === undefined || data === null) {
+    if (required) {
+      throw new AppError(`${field} is required`, 400);
+    }
+
+    return;
+  }
+
+  if (typeof data !== "number" || Number.isNaN(data)) {
+    throw new AppError(`${field} must be a number`, 400);
+  }
+
+  if (data < min) {
+    throw new AppError(`${field} must be greater than or equal to ${min}`, 400);
+  }
+
+  if (data > max) {
+    throw new AppError(`${field} must be less than or equal to ${max}`, 400);
   }
 };
-export const validateUserName = (name) => {
-  if (!name) {
-    throw new AppError("Name is required", 400);
-  }
-
-  if (typeof name !== "string") {
-    throw new AppError("Name must be a string", 400);
-  }
-
-  if (name.trim().length !== name.length) {
-    throw new AppError("Name must not start or end with a space", 400);
-  }
-
-  if (name.length < 2) {
-    throw new AppError("Name must be at least 2 characters long", 400);
-  }
-  if (name.length > 40) {
-    throw new AppError("Name must be at max 40 characters long", 400);
+export const validateIntegerField = (
+  field,
+  data,
+  min = 0,
+  max = 100,
+  required = false,
+) => {
+  validateNumberField(field, data, min, max, required);
+  if (!Number.isInteger(data)) {
+    throw new AppError(`${field} must be interger`, 400);
   }
 };
-export const validateUserRole = (role) => {
-  if (!role) {
-    throw new AppError("invalid role", 400);
+export const validateStringArray = (
+  fieldName,
+  array,
+  minStringLength = 0,
+  maxStringLength = 100,
+  required = false,
+) => {
+  if (array === undefined || array === null) {
+    if (required) {
+      throw new AppError(`${fieldName} is required`, 400);
+    }
+    return;
   }
-  if (role !== "student" && role !== "admin" && role !== "teacher") {
-    throw new AppError("Role must be student or admin or teacher", 400);
+
+  if (!Array.isArray(array)) {
+    throw new AppError(`${fieldName} must be an array`, 400);
+  }
+
+  for (const item of array) {
+    validateStringField(fieldName, item, true);
+    validateStringLength(fieldName, item, minLength, maxLength);
   }
 };
 export const validateClubName = async (clubName) => {

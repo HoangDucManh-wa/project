@@ -1,0 +1,159 @@
+import { UserModel } from "./user.model.js";
+import AppError from "../../shared/utils/AppError.js";
+import validator from "validator";
+import mongoose from "mongoose";
+import {
+  validateStringField,
+  validateStringLength,
+  validateEnumField,
+  validateIntegerField,
+  validateStringArray,
+} from "../../shared/services/validate.service.js";
+export const validateEmail = async (email) => {
+  validateStringField("email", email, true);
+  if (!validator.isEmail(email)) {
+    throw new AppError("Invalid email", 400);
+  }
+  const user = await UserModel.findOne({ email });
+  if (user) {
+    throw new AppError("Email already existed", 409);
+  }
+};
+export const validatePassword = (password) => {
+  validateStringField("password", password, true);
+  let lengthPassword = password.length;
+  //3.1 Check lenght of password
+  validateStringLength("Password", password, 8, 40);
+  //3.2 Check so chu cai thuong,in hoa, so, va ky tu dac biet
+  let a = 0,
+    b = 0,
+    c = 0,
+    d = 0;
+  for (let i = 0; i < lengthPassword; i++) {
+    if (password[i] >= "a" && password[i] <= "z") {
+      a++;
+    } else if (password[i] >= "0" && password[i] <= "9") {
+      b++;
+    } else if (password[i] >= "A" && password[i] <= "Z") {
+      c++;
+    } else {
+      d++;
+    }
+  }
+  if (!(a && b && c && d)) {
+    throw new AppError(
+      "Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character",
+      400,
+    );
+  }
+  //3.3 check space
+  for (let i = 0; i < lengthPassword; i++) {
+    if (password[i] === " ") {
+      throw new AppError("Password must not contain spaces", 400);
+    }
+  }
+};
+export const validateStudentId = (studentId) => {
+  validateStringField("studentId", studentId, false);
+  if (studentId.includes(" ")) {
+    throw new AppError("studentId must not contain spaces", 400);
+  }
+  for (let i = 0; i < studentId.length; i++) {
+    if (!(studentId[i] >= "0" && studentId[i] <= "9")) {
+      throw new AppError(
+        "studentId only contains characters: {0,1,2,...9}",
+        400,
+      );
+    }
+  }
+};
+export const validateUserName = (name) => {
+  validateStringField("userName", name, true);
+  validateStringLength("userName", name, 2, 30);
+};
+export const validateUserRole = (role) => {
+  validateEnumField("role", [role], ["student", "teacher", "admin"]);
+};
+export const validateGender = (gender) => {
+  validateEnumField("gender", [gender], ["male", "female", "other"]);
+};
+export const validateRelationshipStatus = (relationshipStatus) => {
+  validateEnumField(
+    `relationShipStatus`,
+    [relationshipStatus],
+    ["single", "in_relationship", "married"],
+  );
+};
+export const validateAge = (age) => {
+  validateNumIntegerField("field", age, 16, 100, false);
+};
+
+export const validateUniversity = (university) => {
+  validateStringField("university", university, false);
+  validateStringLength("university", university, 2, 100);
+};
+
+export const validateMajor = (major) => {
+  validateStringField("major", major, false);
+  validateStringLength("major", major, 2, 100);
+};
+
+export const validateAcademicYear = (academicYear) => {
+  validateIntegerField("academicYear", academicYear, 1, 8, false);
+};
+
+export const validateCareerPaths = (careerPaths) => {
+  validateStringArray("careerPaths", careerPaths, 1, 100);
+};
+
+export const validateTechStacks = (techStacks) => {
+  validateStringArray("techStacks", techStacks, 1, 50);
+};
+
+export const validateSkills = (skills) => {
+  validateStringArray("skills", skills, 1, 50);
+};
+
+export const validateInterests = (interests) => {
+  validateStringArray("interests", interests, 1, 50);
+};
+
+export const validateBio = (bio) => {
+  validateStringField("bio", bio, false);
+  validateStringLength("bio", bio, 0, 500);
+};
+
+export const validateAvatarUrl = (avatarUrl) => {
+  validateStringField("avatarUrl", avatarUrl, false);
+
+  if (avatarUrl && !validator.isURL(avatarUrl)) {
+    throw new AppError("Invalid avatarUrl", 400);
+  }
+};
+
+export const validateCoverUrl = (coverUrl) => {
+  validateStringField("coverUrl", coverUrl, false);
+
+  if (coverUrl && !validator.isURL(coverUrl)) {
+    throw new AppError("Invalid coverUrl", 400);
+  }
+};
+
+export const validateSocialLinks = (socialLinks) => {
+  if (socialLinks === undefined || socialLinks === null) return;
+
+  const socialFields = ["github", "linkedin", "portfolio", "facebook"];
+
+  for (const field of socialFields) {
+    const value = socialLinks[field];
+
+    validateStringField(field, value, false);
+
+    if (value && !validator.isURL(value)) {
+      throw new AppError(`Invalid ${field} url`, 400);
+    }
+  }
+};
+export const validateUserStatus = (status) => {
+  validateEnumField("status", [status], ["active", "banned"]);
+};
