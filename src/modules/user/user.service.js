@@ -1,21 +1,32 @@
 import bcrypt from "bcrypt";
 import mongoose from "mongoose";
-import validator from "validator";
 import { UserModel } from "./user.model.js";
 import {
+  validateObjectId,
   validateEmail,
+  validateAge,
   validatePassword,
   validateStudentId,
   validateUserName,
   validateUserRole,
-} from "../../shared/services/validate.service.js";
+  validateGender,
+  validateRelationshipStatus,
+  validateUniversity,
+  validateMajor,
+  validateAcademicYear,
+  validateCareerPaths,
+  validateTechStacks,
+  validateSkills,
+  validateInterests,
+  validateBio,
+  validateAvatarUrl,
+  validateCoverUrl,
+  validateSocialLinks,
+  validateUserStatus,
+} from "./user.validate.js";
 import AppError from "../../shared/utils/AppError.js";
 
 const SALT_ROUNDS = 10;
-
-const USER_STATUSES = ["active", "banned"];
-const GENDERS = ["male", "female", "other"];
-const RELATIONSHIP_STATUSES = ["single", "in_relationship", "married"];
 const SOCIAL_LINK_FIELDS = ["github", "linkedin", "portfolio", "facebook"];
 const STRING_ARRAY_FIELDS = [
   "careerPaths",
@@ -36,12 +47,6 @@ const toSafeUser = (user) => {
   return safeData;
 };
 
-const validateObjectId = (id) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new AppError("Invalid user id", 400);
-  }
-};
-
 const handleDuplicateKeyError = (err) => {
   if (err?.code !== 11000) {
     throw err;
@@ -53,115 +58,14 @@ const handleDuplicateKeyError = (err) => {
     throw new AppError("Email already existed", 409);
   }
 
-  if (fields.includes("studentId")) {
+  if (fields.includes("studentId") && fields.includes("university")) {
     throw new AppError("Student id already existed in this university", 409);
   }
 
   throw new AppError("User already existed", 409);
 };
 
-const validateStringField = (field, value, { required = false } = {}) => {
-  if (value === undefined || value === null) {
-    if (required) {
-      throw new AppError(`${field} is required`, 400);
-    }
-    return;
-  }
-
-  if (typeof value !== "string") {
-    throw new AppError(`${field} must be string`, 400);
-  }
-};
-
-const validateNumberField = (field, value, { min, max } = {}) => {
-  if (value === undefined || value === null) {
-    return;
-  }
-
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    throw new AppError(`${field} must be number`, 400);
-  }
-
-  if (min !== undefined && value < min) {
-    throw new AppError(`${field} must be at least ${min}`, 400);
-  }
-
-  if (max !== undefined && value > max) {
-    throw new AppError(`${field} must be at most ${max}`, 400);
-  }
-};
-
-const validateEnumField = (field, value, allowedValues) => {
-  if (value === undefined || value === null || value === "") {
-    return;
-  }
-
-  if (!allowedValues.includes(value)) {
-    throw new AppError(`${field} invalid`, 400);
-  }
-};
-
-const validateStringArrayField = (field, value) => {
-  if (value === undefined || value === null) {
-    return;
-  }
-
-  if (!Array.isArray(value)) {
-    throw new AppError(`${field} must be an array`, 400);
-  }
-
-  const hasInvalidValue = value.some((item) => typeof item !== "string");
-  if (hasInvalidValue) {
-    throw new AppError(`${field} must contain only strings`, 400);
-  }
-};
-
-const validateSocialLinks = (socialLinks) => {
-  if (socialLinks === undefined || socialLinks === null) {
-    return;
-  }
-
-  if (typeof socialLinks !== "object" || Array.isArray(socialLinks)) {
-    throw new AppError("socialLinks must be object", 400);
-  }
-
-  for (const field of SOCIAL_LINK_FIELDS) {
-    validateStringField(`socialLinks.${field}`, socialLinks[field]);
-  }
-};
-
-const validateStudentIdValue = (studentId) => {
-  if (studentId === undefined || studentId === null) {
-    return;
-  }
-
-  validateStudentId(studentId);
-};
-
-const validateEmailFormat = (email) => {
-  validateStringField("email", email, { required: true });
-
-  if (!validator.isEmail(email)) {
-    throw new AppError("Invalid email", 400);
-  }
-};
-
-const assertEmailAvailableForUpdate = async (email, userId) => {
-  if (!email) {
-    return;
-  }
-
-  const existingUser = await UserModel.findOne({
-    email,
-    _id: { $ne: userId },
-  });
-
-  if (existingUser) {
-    throw new AppError("Email already existed", 409);
-  }
-};
-
-const normalizeCreateData = (data) => ({
+const normalizeUserData = (data) => ({
   ...data,
   name: typeof data.name === "string" ? data.name.trim() : data.name,
   email:
@@ -189,66 +93,26 @@ const validateCreateInput = async (data) => {
     throw new AppError("Data is required", 400);
   }
 
-  const normalizedData = normalizeCreateData(data);
+  const normalizedData = normalizeUserData(data);
 
   validateUserName(normalizedData.name);
-  validateEmailFormat(normalizedData.email);
   await validateEmail(normalizedData.email);
   validatePassword(normalizedData.password);
-  validateStudentIdValue(normalizedData.studentId);
-
-  validateStringField("avatarUrl", normalizedData.avatarUrl);
-  validateStringField("coverUrl", normalizedData.coverUrl);
-  validateStringField("bio", normalizedData.bio);
-  validateStringField("university", normalizedData.university);
-  validateStringField("major", normalizedData.major);
-
-  validateNumberField("age", normalizedData.age, { min: 0 });
-  validateNumberField("academicYear", normalizedData.academicYear, {
-    min: 1,
-    max: 10,
-  });
-
-  validateEnumField("gender", normalizedData.gender, GENDERS);
-  validateEnumField(
-    "relationshipStatus",
-    normalizedData.relationshipStatus,
-    RELATIONSHIP_STATUSES,
-  );
-
-  for (const field of STRING_ARRAY_FIELDS) {
-    validateStringArrayField(field, normalizedData[field]);
-  }
-
+  validateStudentId(normalizedData.studentId);
+  validateAvatarUrl(normalizedData.avatarUrl);
+  validateCoverUrl(normalizedData.coverUrl);
+  validateBio(normalizedData.bio);
+  validateAge(normalizedData.age);
+  validateGender(normalizedData.gender);
+  validateRelationshipStatus(normalizedData.relationshipStatus);
+  validateUniversity(normalizedData.university);
+  validateMajor(normalizedData.major);
+  validateAcademicYear(normalizedData.academicYear);
+  validateCareerPaths(normalizedData.careerPaths);
+  validateTechStacks(normalizedData.techStacks);
+  validateSkills(normalizedData.skills);
+  validateInterests(normalizedData.interests);
   validateSocialLinks(normalizedData.socialLinks);
-};
-
-const pickProfileFields = (data) => {
-  const normalizedData = normalizeCreateData(data);
-  const profileFields = [
-    "name",
-    "email",
-    "password",
-    "studentId",
-    "avatarUrl",
-    "coverUrl",
-    "bio",
-    "age",
-    "gender",
-    "relationshipStatus",
-    "university",
-    "major",
-    "academicYear",
-    ...STRING_ARRAY_FIELDS,
-  ];
-
-  return profileFields.reduce((result, field) => {
-    if (normalizedData[field] !== undefined) {
-      result[field] = normalizedData[field];
-    }
-
-    return result;
-  }, {});
 };
 
 const buildUpdateData = async (
@@ -259,78 +123,86 @@ const buildUpdateData = async (
   if (!data) {
     throw new AppError("Data is required", 400);
   }
-
-  const normalizedData = normalizeCreateData(data);
+  const normalizedData = normalizeUserData(data);
   const updateData = {};
-
   if (normalizedData.name !== undefined) {
     validateUserName(normalizedData.name);
     updateData.name = normalizedData.name;
   }
-
   if (normalizedData.email !== undefined) {
-    validateEmailFormat(normalizedData.email);
-    await assertEmailAvailableForUpdate(normalizedData.email, userId);
+    validateEmail(normalizedData.email, userId);
     updateData.email = normalizedData.email;
   }
-
   if (normalizedData.password !== undefined) {
     validatePassword(normalizedData.password);
     updateData.password = await hashPassword(normalizedData.password);
   }
-
   if (normalizedData.studentId !== undefined) {
-    validateStudentIdValue(normalizedData.studentId);
+    validateStudentId(normalizedData.studentId);
     updateData.studentId = normalizedData.studentId;
   }
-
-  for (const field of ["avatarUrl", "coverUrl", "bio", "university", "major"]) {
-    if (normalizedData[field] !== undefined) {
-      validateStringField(field, normalizedData[field]);
-      updateData[field] = normalizedData[field];
-    }
+  if (normalizedData.avatarUrl !== undefined) {
+    validateAvatarUrl(normalizedData.avatarUrl);
+    updateData.avatarUrl = normalizedData.avatarUrl;
   }
-
+  if (normalizedData.coverUrl !== undefined) {
+    validateCoverUrl(normalizedData.coverUrl);
+    updateData.coverUrl = normalizedData.coverUrl;
+  }
+  if (normalizedData.bio !== undefined) {
+    validateBio(normalizedData.bio);
+    updateData.bio = normalizedData.bio;
+  }
   if (normalizedData.age !== undefined) {
-    validateNumberField("age", normalizedData.age, { min: 0 });
+    validateAge(normalizedData.age);
     updateData.age = normalizedData.age;
   }
-
-  if (normalizedData.academicYear !== undefined) {
-    validateNumberField("academicYear", normalizedData.academicYear, {
-      min: 1,
-      max: 10,
-    });
-    updateData.academicYear = normalizedData.academicYear;
-  }
-
   if (normalizedData.gender !== undefined) {
-    validateEnumField("gender", normalizedData.gender, GENDERS);
+    validateGender(normalizedData.gender);
     updateData.gender = normalizedData.gender;
   }
-
   if (normalizedData.relationshipStatus !== undefined) {
-    validateEnumField(
-      "relationshipStatus",
-      normalizedData.relationshipStatus,
-      RELATIONSHIP_STATUSES,
-    );
+    validateRelationshipStatus(normalizedData.relationshipStatus);
     updateData.relationshipStatus = normalizedData.relationshipStatus;
   }
-
-  for (const field of STRING_ARRAY_FIELDS) {
-    if (normalizedData[field] !== undefined) {
-      validateStringArrayField(field, normalizedData[field]);
-      updateData[field] = normalizedData[field];
-    }
+  if (normalizedData.university !== undefined) {
+    validateUniversity(normalizedData.university);
+    updateData.university = normalizedData.university;
   }
-
+  if (normalizedData.major !== undefined) {
+    validateMajor(normalizedData.major);
+    updateData.major = normalizedData.major;
+  }
+  if (normalizedData.academicYear !== undefined) {
+    validateAcademicYear(normalizedData.academicYear);
+    updateData.academicYear = normalizedData.academicYear;
+  }
+  if (normalizedData.careerPaths !== undefined) {
+    validateCareerPaths(normalizedData.careerPaths);
+    updateData.careerPaths = normalizedData.careerPaths;
+  }
+  if (normalizedData.techStacks !== undefined) {
+    validateTechStacks(normalizedData.techStacks);
+    updateData.techStacks = normalizedData.techStacks;
+  }
+  if (normalizedData.skills !== undefined) {
+    validateSkills(normalizedData.skills);
+    updateData.skills = normalizedData.skills;
+  }
+  if (normalizedData.interests !== undefined) {
+    validateInterests(normalizedData.interests);
+    updateData.interests = normalizedData.interests;
+  }
   if (normalizedData.socialLinks !== undefined) {
     validateSocialLinks(normalizedData.socialLinks);
-
-    for (const field of SOCIAL_LINK_FIELDS) {
-      if (normalizedData.socialLinks[field] !== undefined) {
-        updateData[`socialLinks.${field}`] = normalizedData.socialLinks[field];
+    if (normalizedData.socialLinks === null) {
+      updateData.socialLinks = normalizedData.socialLinks;
+    } else {
+      for (const field of SOCIAL_LINK_FIELDS) {
+        if (normalizedData.socialLinks[field] !== undefined) {
+          updateData[`socialLinks.${field}`] =
+            normalizedData.socialLinks[field];
+        }
       }
     }
   }
@@ -341,63 +213,26 @@ const buildUpdateData = async (
   }
 
   if (allowAdminFields && normalizedData.status !== undefined) {
-    validateEnumField("status", normalizedData.status, USER_STATUSES);
+    validateUserStatus(normalizedData.status);
     updateData.status = normalizedData.status;
   }
-
-  if (Object.keys(updateData).length === 0) {
-    throw new AppError("No valid fields to update", 400);
-  }
-
   return updateData;
 };
 
-export const createUser = async (data) => {
+export const createUser = async (data, role) => {
   await validateCreateInput(data);
 
-  const normalizedData = normalizeCreateData(data);
-  const createData = pickProfileFields(normalizedData);
+  const normalizedData = normalizeUserData(data);
+  const createData = normalizedData;
   createData.password = await hashPassword(normalizedData.password);
-  createData.role = ["student", "teacher"].includes(normalizedData.role)
-    ? normalizedData.role
-    : "student";
+  if (role !== "admin") {
+    createData.role = ["student", "teacher"].includes(normalizedData.role)
+      ? normalizedData.role
+      : "student";
+  }
   createData.status = "active";
-
-  if (normalizedData.socialLinks) {
-    createData.socialLinks = normalizedData.socialLinks;
-  }
-
-  try {
-    const user = await UserModel.create(createData);
-    return toSafeUser(user);
-  } catch (err) {
-    handleDuplicateKeyError(err);
-  }
-};
-
-export const createUserByAdmin = async (data, role) => {
-  await validateCreateInput(data);
-
-  const normalizedData = normalizeCreateData(data);
-  const normalizedRole =
-    typeof role === "string" ? role.trim().toLowerCase() : role;
-  validateUserRole(normalizedRole);
-
-  const createData = pickProfileFields(normalizedData);
-  createData.password = await hashPassword(normalizedData.password);
-  createData.role = normalizedRole;
-  createData.status = "active";
-
-  if (normalizedData.socialLinks) {
-    createData.socialLinks = normalizedData.socialLinks;
-  }
-
-  try {
-    const user = await UserModel.create(createData);
-    return toSafeUser(user);
-  } catch (err) {
-    handleDuplicateKeyError(err);
-  }
+  const user = await UserModel.create(createData);
+  return toSafeUser(user);
 };
 
 export const getUsers = async (page = 1, limit = 10) => {
@@ -437,8 +272,6 @@ export const getUserById = async (id) => {
   return user;
 };
 
-export const getCurrentUser = async (id) => getUserById(id);
-
 export const getUserByName = async (name, page = 1, limit = 20) => {
   if (!name || typeof name !== "string") {
     throw new AppError("Name is required", 400);
@@ -459,47 +292,18 @@ export const getUserByName = async (name, page = 1, limit = 20) => {
     .sort({ createdAt: -1 });
 };
 
-export const updateUser = async (data, id) => {
+export const updateUser = async (data, id, role) => {
   validateObjectId(id);
-
-  const updateData = await buildUpdateData(data, id);
-  let user;
-
-  try {
-    user = await UserModel.findOneAndUpdate(
-      { _id: id, status: "active" },
-      { $set: updateData },
-      { new: true, runValidators: true },
-    );
-  } catch (err) {
-    handleDuplicateKeyError(err);
-  }
-
-  if (!user) {
-    throw new AppError("User not found", 404);
-  }
-
-  return toSafeUser(user);
-};
-
-export const updateUserByAdmin = async (data, id) => {
-  validateObjectId(id);
-
+  let checkRole = role === "admin";
   const updateData = await buildUpdateData(data, id, {
-    allowAdminFields: true,
+    allowAdminFields: checkRole,
   });
   let user;
-
-  try {
-    user = await UserModel.findByIdAndUpdate(
-      id,
-      { $set: updateData },
-      { new: true, runValidators: true },
-    );
-  } catch (err) {
-    handleDuplicateKeyError(err);
-  }
-
+  user = await UserModel.findOneAndUpdate(
+    { _id: id, status: "active" },
+    { $set: updateData },
+    { new: true, runValidators: true },
+  );
   if (!user) {
     throw new AppError("User not found", 404);
   }

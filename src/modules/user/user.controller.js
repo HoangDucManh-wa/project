@@ -1,170 +1,143 @@
 import {
-  createUserByAdmin,
-  getCurrentUser,
+  createUser,
   getUsers,
   getUserById,
   getUserByName,
   updateUser,
-  updateUserByAdmin,
   deleteUser,
   lockUser,
   unlockUser,
 } from "./user.service.js";
 
-export const createUserByAdminController = async (req, res) => {
+const getRequestUserId = (req) => req.user?._id?.toString() || req.user?.id;
+
+const sendError = (res, err, fallbackMessage) =>
+  res.status(err.status || 500).json({
+    message: err.message || fallbackMessage,
+  });
+
+export const createUserController = async (req, res) => {
   try {
-    const data = req.body;
-    const role = data.role;
-    const user = await createUserByAdmin(data, role);
+    const user = await createUser(req.body, req.user.role);
+
     return res.status(201).json({
-      message: "create user by admin successful",
+      message: "create user successful",
       data: user,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "create user failed",
-    });
+    return sendError(res, err, "create user failed");
   }
 };
 
 export const getUsersController = async (req, res) => {
   try {
-    const data = req.query;
-    const page = parseInt(data.page) || 1;
-    const limit = parseInt(data.limit) || 10;
-
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
     const users = await getUsers(page, limit);
+
     return res.status(200).json({
       message: "get users successful",
       data: users,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "get users failed",
-    });
+    return sendError(res, err, "get users failed");
   }
 };
 
 export const getUserByIdController = async (req, res) => {
   try {
-    const id = req.params.id;
-    const user = await getUserById(id);
+    const user = await getUserById(req.params.id);
+
     return res.status(200).json({
       message: "get user by id successful",
       data: user,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "get user by id failed",
-    });
+    return sendError(res, err, "get user by id failed");
   }
 };
 
 export const getCurrentUserController = async (req, res) => {
   try {
-    const id = req.user.id;
-    const user = await getCurrentUser(id);
+    const user = await getUserById(getRequestUserId(req));
+
     return res.status(200).json({
       message: "get current user successful",
       data: user,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "get current user failed",
-    });
+    return sendError(res, err, "get current user failed");
   }
 };
 
 export const getUserByNameController = async (req, res) => {
   try {
-    const data = req.query;
-    const name = data.name;
-    const page = data.page || 1;
-    const limit = data.limit || 20;
-    const user = await getUserByName(name, page, limit);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const users = await getUserByName(req.query.name, page, limit);
+
     return res.status(200).json({
       message: "get user by name successful",
-      data: user,
+      data: users,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "get user by name failed",
-    });
+    return sendError(res, err, "get user by name failed");
   }
 };
 
 export const updateUserController = async (req, res) => {
   try {
-    const data = req.body;
-    const id = req.user.id; //lấy id của user ở req.user sau khi qua verifyToken
-    const user = await updateUser(data, id);
+    const currentUserId = getRequestUserId(req);
+    const id = req.params.id || currentUserId;
+
+    if (req.user.role !== "admin" && id !== currentUserId) {
+      return res.status(403).json({
+        message: "You don't have this permission",
+      });
+    }
+
+    const user = await updateUser(req.body, id, req.user.role);
 
     return res.status(200).json({
       message: "update user successful",
       data: user,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "update user failed",
-    });
+    return sendError(res, err, "update user failed");
   }
 };
-
-export const updateUserByAdminController = async (req, res) => {
-  try {
-    const data = req.body;
-    const id = req.params.id;
-    const user = await updateUserByAdmin(data, id);
-
-    return res.status(200).json({
-      message: "update user by admin successful",
-      data: user,
-    });
-  } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "update user by admin failed",
-    });
-  }
-};
-
 export const deleteUserController = async (req, res) => {
   try {
-    const id = req.params.id;
-    const alert = await deleteUser(id);
+    const alert = await deleteUser(req.params.id);
 
     return res.status(200).json({
       message: alert.message,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "delete user failed",
-    });
+    return sendError(res, err, "delete user failed");
   }
 };
+
 export const lockUserController = async (req, res) => {
   try {
-    const id = req.params.id;
-    const alert = await lockUser(id);
+    const alert = await lockUser(req.params.id);
+
     return res.status(200).json({
       message: alert.message,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "lock user failed",
-    });
+    return sendError(res, err, "lock user failed");
   }
 };
 
 export const unlockUserController = async (req, res) => {
   try {
-    const id = req.params.id;
-    const alert = await unlockUser(id);
+    const alert = await unlockUser(req.params.id);
+
     return res.status(200).json({
       message: alert.message,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "unlock user failed",
-    });
+    return sendError(res, err, "unlock user failed");
   }
 };

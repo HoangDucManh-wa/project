@@ -6,9 +6,9 @@ import mongoose from "mongoose";
 export const validateStringField = (field, data, required = false) => {
   if (data === null || data === undefined) {
     if (required) {
-      throw new AppError(`{field} is required`, 400);
+      throw new AppError(`${field} is required`, 400);
     }
-    return;
+    return 0;
   }
   if (typeof data !== "string") {
     throw new AppError(`${field} must be string`, 400);
@@ -35,7 +35,7 @@ export const validateEnumField = (field, arr = [], enumData = []) => {
   }
   arr.forEach((x) => {
     if (!enumData.includes(x)) {
-      throw new AppError(`${field} only contains ${array.join(", ")}`, 400);
+      throw new AppError(`${field} only contains ${enumData.join(", ")}`, 400);
     }
   });
 };
@@ -51,7 +51,7 @@ export const validateNumberField = (
       throw new AppError(`${field} is required`, 400);
     }
 
-    return;
+    return 0;
   }
 
   if (typeof data !== "number" || Number.isNaN(data)) {
@@ -73,7 +73,9 @@ export const validateIntegerField = (
   max = 100,
   required = false,
 ) => {
-  validateNumberField(field, data, min, max, required);
+  let result = validateNumberField(field, data, min, max, required);
+  if (result === 0) return;
+
   if (!Number.isInteger(data)) {
     throw new AppError(`${field} must be interger`, 400);
   }
@@ -89,7 +91,7 @@ export const validateStringArray = (
     if (required) {
       throw new AppError(`${fieldName} is required`, 400);
     }
-    return;
+    return 0;
   }
 
   if (!Array.isArray(array)) {
@@ -98,7 +100,7 @@ export const validateStringArray = (
 
   for (const item of array) {
     validateStringField(fieldName, item, true);
-    validateStringLength(fieldName, item, minLength, maxLength);
+    validateStringLength(fieldName, item, minStringLength, maxStringLength);
   }
 };
 export const validateClubName = async (clubName) => {

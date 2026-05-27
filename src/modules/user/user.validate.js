@@ -9,16 +9,33 @@ import {
   validateIntegerField,
   validateStringArray,
 } from "../../shared/services/validate.service.js";
-export const validateEmail = async (email) => {
+export const validateObjectId = (id) => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError("Invalid user id", 400);
+  }
+};
+export const validateEmail = async (email, userId = null) => {
   validateStringField("email", email, true);
   if (!validator.isEmail(email)) {
     throw new AppError("Invalid email", 400);
   }
-  const user = await UserModel.findOne({ email });
-  if (user) {
-    throw new AppError("Email already existed", 409);
+  if (userId) {
+    const existingUser = await UserModel.findOne({
+      email,
+      _id: { $ne: userId },
+    });
+
+    if (existingUser) {
+      throw new AppError("Email already existed", 409);
+    }
+  } else {
+    const user = await UserModel.findOne({ email });
+    if (user) {
+      throw new AppError("Email already existed", 409);
+    }
   }
 };
+
 export const validatePassword = (password) => {
   validateStringField("password", password, true);
   let lengthPassword = password.length;
@@ -54,7 +71,8 @@ export const validatePassword = (password) => {
   }
 };
 export const validateStudentId = (studentId) => {
-  validateStringField("studentId", studentId, false);
+  let result = validateStringField("studentId", studentId, false);
+  if (result === 0) return;
   if (studentId.includes(" ")) {
     throw new AppError("studentId must not contain spaces", 400);
   }
@@ -68,7 +86,7 @@ export const validateStudentId = (studentId) => {
   }
 };
 export const validateUserName = (name) => {
-  validateStringField("userName", name, true);
+  let result = validateStringField("userName", name, true);
   validateStringLength("userName", name, 2, 30);
 };
 export const validateUserRole = (role) => {
@@ -85,16 +103,18 @@ export const validateRelationshipStatus = (relationshipStatus) => {
   );
 };
 export const validateAge = (age) => {
-  validateNumIntegerField("field", age, 16, 100, false);
+  validateIntegerField("age", age, 16, 100, false);
 };
 
 export const validateUniversity = (university) => {
-  validateStringField("university", university, false);
+  let result = validateStringField("university", university, false);
+  if (result === 0) return;
   validateStringLength("university", university, 2, 100);
 };
 
 export const validateMajor = (major) => {
-  validateStringField("major", major, false);
+  let result = validateStringField("major", major, false);
+  if (result === 0) return;
   validateStringLength("major", major, 2, 100);
 };
 
@@ -119,12 +139,15 @@ export const validateInterests = (interests) => {
 };
 
 export const validateBio = (bio) => {
-  validateStringField("bio", bio, false);
+  let result = validateStringField("bio", bio, false);
+  if (result === 0) return;
+
   validateStringLength("bio", bio, 0, 500);
 };
 
 export const validateAvatarUrl = (avatarUrl) => {
-  validateStringField("avatarUrl", avatarUrl, false);
+  let result = validateStringField("avatarUrl", avatarUrl, false);
+  if (result === 0) return;
 
   if (avatarUrl && !validator.isURL(avatarUrl)) {
     throw new AppError("Invalid avatarUrl", 400);
@@ -132,7 +155,8 @@ export const validateAvatarUrl = (avatarUrl) => {
 };
 
 export const validateCoverUrl = (coverUrl) => {
-  validateStringField("coverUrl", coverUrl, false);
+  let result = validateStringField("coverUrl", coverUrl, false);
+  if (result === 0) return;
 
   if (coverUrl && !validator.isURL(coverUrl)) {
     throw new AppError("Invalid coverUrl", 400);
@@ -147,10 +171,11 @@ export const validateSocialLinks = (socialLinks) => {
   for (const field of socialFields) {
     const value = socialLinks[field];
 
-    validateStringField(field, value, false);
-
-    if (value && !validator.isURL(value)) {
-      throw new AppError(`Invalid ${field} url`, 400);
+    let result = validateStringField(field, value, false);
+    if (result !== 0) {
+      if (value && !validator.isURL(value)) {
+        throw new AppError(`Invalid ${field} url`, 400);
+      }
     }
   }
 };
