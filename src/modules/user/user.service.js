@@ -130,7 +130,7 @@ const buildUpdateData = async (
     updateData.name = normalizedData.name;
   }
   if (normalizedData.email !== undefined) {
-    validateEmail(normalizedData.email, userId);
+    await validateEmail(normalizedData.email, userId);
     updateData.email = normalizedData.email;
   }
   if (normalizedData.password !== undefined) {

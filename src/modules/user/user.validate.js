@@ -93,9 +93,11 @@ export const validateUserRole = (role) => {
   validateEnumField("role", [role], ["student", "teacher", "admin"]);
 };
 export const validateGender = (gender) => {
+  if (!gender) gender = "other";
   validateEnumField("gender", [gender], ["male", "female", "other"]);
 };
 export const validateRelationshipStatus = (relationshipStatus) => {
+  if (!relationshipStatus) relationshipStatus = "single";
   validateEnumField(
     `relationShipStatus`,
     [relationshipStatus],
