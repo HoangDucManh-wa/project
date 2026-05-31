@@ -5,8 +5,15 @@ import {
   getClubs,
   getClubById,
   getClubsByCategory,
-  getClubsByName,
+  getClubsByKeyWords,
+  lockClub,
 } from "./club.service.js";
+
+const sendError = (res, err, mess) =>
+  res.status(err.status || 500).json({
+    message: mess || err.message,
+    err: err.message,
+  });
 
 //1. Create club
 export const createClubController = async (req, res) => {
@@ -20,9 +27,7 @@ export const createClubController = async (req, res) => {
       data: club,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "create club failed",
-    });
+    return sendError(res, err, "create club failed");
   }
 };
 export const getClubsController = async (req, res) => {
@@ -37,28 +42,24 @@ export const getClubsController = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "get clubs failed",
-    });
+    return sendError(res, err, "get clubs failed");
   }
 };
-export const getClubsByNameController = async (req, res) => {
+export const getClubsByKeyWordsController = async (req, res) => {
   try {
+    const field = req.query.field;
     const name = req.query.name;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    const result = await getClubsByName({ name, page, limit });
+    const result = await getClubsByKeyWords({ field, name, page, limit });
 
     return res.status(200).json({
-      message: "search clubs by name successful",
+      message: `search clubs by ${field} successful`,
       data: result,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: "search clubs by name failed",
-      error: err.message,
-    });
+    return sendError(res, err, "search clubs by keywords failed");
   }
 };
 export const getClubsByCategoryController = async (req, res) => {
@@ -74,9 +75,7 @@ export const getClubsByCategoryController = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "get clubs by category failed",
-    });
+    return sendError(res, err, "get clubs by category failed");
   }
 };
 export const getClubByIdController = async (req, res) => {
@@ -90,9 +89,7 @@ export const getClubByIdController = async (req, res) => {
       data: result,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "get club by id failed",
-    });
+    return sendError(res, err, "get club by id failed");
   }
 };
 //2. Update club
@@ -108,9 +105,22 @@ export const updateClubController = async (req, res) => {
       data: club,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "update club failed",
+    return sendError(res, err, "update club failed");
+  }
+};
+
+export const lockClubController = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const result = await lockClub({ id });
+
+    return res.status(200).json({
+      message: "lock club successful",
+      data: result,
     });
+  } catch (err) {
+    return sendError(res, err, "lock club failed");
   }
 };
 
@@ -122,11 +132,10 @@ export const deleteClubController = async (req, res) => {
     const result = await deleteClub(id);
 
     return res.status(200).json({
-      message: result.message,
+      message: "delete club successful",
+      data: result,
     });
   } catch (err) {
-    return res.status(err.status || 500).json({
-      message: err.message || "delete club failed",
-    });
+    return sendError(res, err, "delete club failed");
   }
 };

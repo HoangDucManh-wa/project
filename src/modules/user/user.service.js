@@ -2,7 +2,6 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import { UserModel } from "./user.model.js";
 import {
-  validateObjectId,
   validateEmail,
   validateAge,
   validatePassword,
@@ -24,6 +23,7 @@ import {
   validateSocialLinks,
   validateUserStatus,
 } from "./user.validate.js";
+import { validateObjectId } from "../../shared/services/validate.service.js";
 import AppError from "../../shared/utils/AppError.js";
 
 const SALT_ROUNDS = 10;

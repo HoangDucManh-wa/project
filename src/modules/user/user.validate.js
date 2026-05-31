@@ -1,19 +1,15 @@
 import { UserModel } from "./user.model.js";
 import AppError from "../../shared/utils/AppError.js";
 import validator from "validator";
-import mongoose from "mongoose";
 import {
+  validateObjectId,
   validateStringField,
   validateStringLength,
   validateEnumField,
   validateIntegerField,
   validateStringArray,
 } from "../../shared/services/validate.service.js";
-export const validateObjectId = (id) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new AppError("Invalid user id", 400);
-  }
-};
+
 export const validateEmail = async (email, userId = null) => {
   validateStringField("email", email, true);
   if (!validator.isEmail(email)) {
@@ -86,18 +82,18 @@ export const validateStudentId = (studentId) => {
   }
 };
 export const validateUserName = (name) => {
-  let result = validateStringField("userName", name, true);
+  validateStringField("userName", name, true);
   validateStringLength("userName", name, 2, 30);
 };
 export const validateUserRole = (role) => {
   validateEnumField("role", [role], ["student", "teacher", "admin"]);
 };
 export const validateGender = (gender) => {
-  if (!gender) gender = "other";
+  if (gender === undefined) return;
   validateEnumField("gender", [gender], ["male", "female", "other"]);
 };
 export const validateRelationshipStatus = (relationshipStatus) => {
-  if (!relationshipStatus) relationshipStatus = "single";
+  if (relationshipStatus === undefined) return;
   validateEnumField(
     `relationShipStatus`,
     [relationshipStatus],
@@ -167,9 +163,17 @@ export const validateCoverUrl = (coverUrl) => {
 
 export const validateSocialLinks = (socialLinks) => {
   if (socialLinks === undefined || socialLinks === null) return;
-
+  if (
+    !(
+      typeof socialLinks === "object" &&
+      !Array.isArray(socialLinks) &&
+      socialLinks !== null
+    )
+  ) {
+    throw new AppError("The type of socialLinks is invalid", 400);
+  }
   const socialFields = ["github", "linkedin", "portfolio", "facebook"];
-
+  validateEnumField("socialLinks", socialLinks, socialFields, false);
   for (const field of socialFields) {
     const value = socialLinks[field];
 

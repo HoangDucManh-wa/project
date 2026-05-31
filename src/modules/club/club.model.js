@@ -7,18 +7,22 @@ const clubSchema = new mongoose.Schema(
       required: true,
       trim: true,
       unique: true,
+      minlength: 1,
+      maxlength: 100,
     },
 
     description: {
       type: String,
       trim: true,
       default: "",
+      maxlength: 5000,
     },
 
     category: {
       type: String,
       enum: ["academic", "sports", "volunteer", "other"],
       trim: true,
+      required: true,
     },
 
     leaderId: {
@@ -27,21 +31,17 @@ const clubSchema = new mongoose.Schema(
       required: true,
     },
 
-    avatar: {
-      type: String,
-      default: "",
-    },
-
     // bổ sung
     university: {
       type: String,
       trim: true,
-      required: true,
+      maxlength: 300,
     },
 
     socialLinks: {
       facebook: {
         type: String,
+        maxlength: 800,
         trim: true,
         default: "",
       },
@@ -49,6 +49,7 @@ const clubSchema = new mongoose.Schema(
       website: {
         type: String,
         trim: true,
+        maxlength: 800,
         default: "",
       },
     },
@@ -58,17 +59,19 @@ const clubSchema = new mongoose.Schema(
       posts: {
         type: Number,
         default: 0,
+        max: 200,
       },
-    },
-
-    memberCount: {
-      type: Number,
-      default: 0,
-    },
-
-    maxMemberCount: {
-      type: Number,
-      default: 100,
+      maxMemberCount: {
+        type: Number,
+        default: 100,
+        max: 150,
+      },
+      memberCount: {
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 150,
+      },
     },
 
     status: {

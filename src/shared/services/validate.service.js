@@ -1,8 +1,12 @@
-import { UserModel } from "../../modules/user/user.model.js";
 import AppError from "../utils/AppError.js";
-import { clubModel } from "../../modules/club/club.model.js";
 import validator from "validator";
 import mongoose from "mongoose";
+export const validateObjectId = (id) => {
+  let check = mongoose.Types.ObjectId.isValid(id);
+  if (!check) {
+    throw new AppError("invalid Id", 400);
+  }
+};
 export const validateStringField = (field, data, required = false) => {
   if (data === null || data === undefined) {
     if (required) {
@@ -15,7 +19,7 @@ export const validateStringField = (field, data, required = false) => {
   }
   if (data.trim() === "") {
     if (required) {
-      throw new AppError(`{field} is required`, 400);
+      throw new AppError(`${field} is required`, 400);
     }
   }
 };
@@ -23,22 +27,63 @@ export const validateStringField = (field, data, required = false) => {
 export const validateStringLength = (field, data, min = 0, max = 100) => {
   let length = data.length;
   if (length < min) {
-    throw new AppError(`${field} must ne at least ${min} characters long`, 400);
+    throw new AppError(`${field} must be at least ${min} characters long`, 400);
   }
   if (length > max) {
-    throw new AppError(`${field} must ne at max ${max} characters long`, 400);
+    throw new AppError(`${field} must be at max ${max} characters long`, 400);
   }
 };
-export const validateEnumField = (field, arr = [], enumData = []) => {
-  if (arr.length === 0) {
-    throw new AppError(`invalid ${field}`, 400);
+
+export const validateEnumField = (
+  field,
+  data = [],
+  enumData = [],
+  require = false,
+) => {
+  if (data === null || data === undefined) {
+    if (!require) return 0;
+    throw new AppError(`${field} is required`, 400);
   }
-  arr.forEach((x) => {
-    if (!enumData.includes(x)) {
-      throw new AppError(`${field} only contains ${enumData.join(", ")}`, 400);
+  // if data is an array
+  if (Array.isArray(data)) {
+    if (data.length === 0) {
+      if (!require) return 0;
+      throw new AppError(`invalid ${field}`, 400);
     }
-  });
+    data.forEach((x) => {
+      if (!enumData.includes(x)) {
+        throw new AppError(
+          `${field} only contains ${enumData.join(", ")}`,
+          400,
+        );
+      }
+    });
+  } else if (typeof data === "string") {
+    if (!enumData.includes(data)) {
+      throw new AppError(`${field} only contains ${enumData}`, 400);
+    }
+  } else if (
+    typeof data === "object" &&
+    data !== null &&
+    !Array.isArray(data)
+  ) {
+    let keys = Object.keys(data);
+    if (keys.length === 0) {
+      if (require) {
+        throw new AppError(`${field} is required`, 400);
+      }
+      return 0;
+    }
+    for (let x of keys) {
+      if (!enumData.includes(x)) {
+        throw new AppError(`${field} only contains ${enumData.join(", ")}`);
+      }
+    }
+  } else {
+    throw new AppError(`The type of ${field} is invalid`, 400);
+  }
 };
+// If ghe type is an object
 export const validateNumberField = (
   field,
   data,
@@ -101,66 +146,5 @@ export const validateStringArray = (
   for (const item of array) {
     validateStringField(fieldName, item, true);
     validateStringLength(fieldName, item, minStringLength, maxStringLength);
-  }
-};
-export const validateClubName = async (clubName) => {
-  if (!clubName) {
-    throw new AppError("clubName is required", 400);
-  }
-  if (typeof clubName !== "string") {
-    throw new AppError("Type of clubName must be string", 400);
-  }
-  const club = await clubModel.findOne({ clubName });
-  if (club) {
-    throw new AppError("clubName already existed", 400);
-  }
-};
-export const validateClubCategory = (category) => {
-  //không cần kiểm tra category có phải là null không, bởi trong service chỉ dùng hàm validateCategory khi category khác null
-  if (typeof category !== "string") {
-    throw new AppError("category must be string", 400);
-  }
-  if (
-    category !== "academic" &&
-    category !== "sports" &&
-    category !== "volunteer" &&
-    category !== "other"
-  ) {
-    throw new AppError("category invalid", 400);
-  }
-};
-export const validateClubLeaderId = async (leaderId) => {
-  if (!leaderId) {
-    throw new AppError("leaderId is required", 400);
-  }
-
-  if (!mongoose.Types.ObjectId.isValid(leaderId)) {
-    throw new AppError("Invalid leaderId format", 400);
-  }
-
-  const user = await UserModel.findById(leaderId);
-
-  if (!user || user.status !== "active") {
-    throw new AppError("Leader not found", 404);
-  }
-};
-export const validateMemberCount = (memberCount) => {
-  if (!Number.isInteger(memberCount)) {
-    throw new AppError("memberCount must be an integer", 400);
-  }
-
-  if (memberCount < 0) {
-    throw new AppError("memberCount cannot be less than 0", 400);
-  }
-};
-export const validateClubStatus = (status) => {
-  if (typeof status !== "string") {
-    throw new AppError("status must be string", 400);
-  }
-
-  const validStatuses = ["active", "inactive"];
-
-  if (!validStatuses.includes(status)) {
-    throw new AppError("status invalid", 400);
   }
 };

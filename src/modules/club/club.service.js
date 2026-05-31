@@ -2,85 +2,112 @@ import { clubModel } from "./club.model.js";
 import AppError from "../../shared/utils/AppError.js";
 import {
   validateClubName,
+  validateDescription,
   validateClubCategory,
   validateClubLeaderId,
-  validateMemberCount,
+  validateUniversity,
+  validateSocialLinks,
+  validateStats,
   validateClubStatus,
+} from "./club.validate.js";
+import {
+  validateObjectId,
+  validateStringField,
+  validateStringLength,
 } from "../../shared/services/validate.service.js";
-import mongoose from "mongoose";
-async function validateInput(data) {
-  if (!data) {
-    throw new AppError("invalid data", 400);
+const keywords = ["clubName", "description", "university"];
+const fields = [
+  "clubName",
+  "description",
+  "category",
+  "leaderId",
+  "university",
+  "socialLinks",
+  "stats",
+  "status",
+];
+function normalizeData(data) {
+  if (!(typeof data === "object" && data !== null && !Array.isArray(data)))
+    return;
+  let normalizedData = {};
+  let keys = Object.keys(data);
+  for (let x of keys) {
+    if (typeof data[x] === "string") {
+      normalizedData[x] = data[x].trim();
+    } else {
+      normalizedData[x] = data[x];
+    }
   }
-
-  const {
+  return normalizedData;
+}
+async function validateInput(data, id = null) {
+  //id===null->this function is used to create a Club
+  //id!==null->this function is used to update a Club
+  if (data === undefined) {
+    throw new AppError("data is required", 400);
+  }
+  if (!(typeof data === "object" && data !== null && !Array.isArray(data))) {
+    throw new AppError("The type of data is invalid", 400);
+  }
+  const keys = Object.keys(data);
+  for (let field of keys) {
+    if (!fields.includes(field)) {
+      throw new AppError(`${field} field does not exist`, 400);
+    }
+  }
+  let {
     clubName,
     description,
     category,
     leaderId,
-    avatar,
-    memberCount,
+    university,
+    socialLinks,
+    stats,
     status,
   } = data;
-  await validateClubName(clubName);
-  // validate description (nhẹ, đúng style cũ)
-  if (description) {
-    if (typeof description !== "string") {
-      throw new AppError("description must be string", 400);
-    }
-  }
-  //category
-  if (category) {
+
+  if (id === null) {
     validateClubCategory(category);
-  }
-  //leaderId
-  await validateClubLeaderId(leaderId);
-  //avatar
-  if (avatar) {
-    if (typeof avatar !== "string") {
-      throw new AppError("Avatar must be string", 400);
-    }
-  }
-  //memberCount
-  if (memberCount !== undefined) {
-    validateMemberCount(memberCount);
-  }
-  //status
-  if (status) {
+    await validateClubLeaderId(leaderId);
+    await validateClubName(clubName, id);
+    validateDescription(description);
+    validateUniversity(university);
+    validateSocialLinks(socialLinks);
+    validateStats(stats);
     validateClubStatus(status);
+  } else {
+    const club = await clubModel.findOne({
+      _id: id,
+      status: "active",
+    });
+    if (!club) {
+      throw new AppError("Club not found", 404);
+    }
+    if (category !== undefined) validateClubCategory(category);
+    if (leaderId !== undefined) await validateClubLeaderId(leaderId);
+    if (clubName !== undefined) await validateClubName(clubName, id);
+    if (description !== undefined) validateDescription(description);
+    if (university !== undefined) validateUniversity(university);
+    if (socialLinks !== undefined) validateSocialLinks(socialLinks);
+    if (stats !== undefined) validateStats(stats);
+    if (status !== undefined) validateClubStatus(status);
   }
 }
 
 export const createClub = async (data) => {
-  await validateInput(data);
-
-  const {
-    clubName,
-    description,
-    category,
-    leaderId,
-    avatar,
-    memberCount,
-    status,
-  } = data;
-
-  const club = await clubModel.create({
-    clubName,
-    description,
-    category,
-    leaderId,
-    avatar,
-    memberCount,
-    status,
-  });
-
+  let normalizedData = normalizeData(data);
+  await validateInput(normalizedData);
+  const club = await clubModel.create(normalizedData);
+  if (!club) {
+    throw new AppError(`Failed to create the club`, 500);
+  }
   return club;
 };
 export const getClubs = async ({ page = 1, limit = 10 }) => {
   const skip = (page - 1) * limit;
-
   const clubs = await clubModel
     .find({ status: "active" })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -96,19 +123,32 @@ export const getClubs = async ({ page = 1, limit = 10 }) => {
     total,
   };
 };
-export const getClubsByName = async ({ name, page = 1, limit = 10 }) => {
+export const getClubsByKeyWords = async ({
+  field,
+  name,
+  page = 1,
+  limit = 10,
+}) => {
+  if (!keywords.includes(field)) {
+    throw new AppError(`${field} is invalid`, 400);
+  }
+  if (name === undefined) return;
+  validateStringField(field, name, true);
+  validateStringLength(field, name, 1, 100);
+  const escapedName = name.replace(/[~`!@#$%^&?*(\)<\>\/{}[\]\\]/g, "\\$&");
   const skip = (page - 1) * limit;
 
   const clubs = await clubModel
     .find({
-      clubName: { $regex: name, $options: "i" },
+      [field]: { $regex: escapedName, $options: "i" },
       status: "active",
     })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
   const total = await clubModel.countDocuments({
-    clubName: { $regex: name, $options: "i" },
+    [field]: { $regex: escapedName, $options: "i" },
     status: "active",
   });
 
@@ -125,6 +165,7 @@ export const getClubsByCategory = async ({
   page = 1,
   limit = 10,
 }) => {
+  validateClubCategory(category);
   const skip = (page - 1) * limit;
 
   const clubs = await clubModel
@@ -132,6 +173,7 @@ export const getClubsByCategory = async ({
       category,
       status: "active",
     })
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
@@ -149,10 +191,7 @@ export const getClubsByCategory = async ({
   };
 };
 export const getClubById = async (id) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new AppError("Invalid clubId format", 400);
-  }
-
+  validateObjectId(id);
   const club = await clubModel.findOne({
     _id: id,
     status: "active",
@@ -165,72 +204,33 @@ export const getClubById = async (id) => {
   return club;
 };
 export const updateClub = async ({ data, id }) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new AppError("Invalid clubId format", 400);
-  }
-  let updateData = {};
-  const club = await clubModel.findById(id);
+  validateObjectId(id);
+  let normalizedData = normalizeData(data);
+  await validateInput(normalizedData, id);
+  const club = await clubModel.findByIdAndUpdate(id, normalizedData, {
+    new: true,
+  });
+  return club;
+};
+export const lockClub = async ({ id }) => {
+  validateObjectId(id);
+  let club = await clubModel.findOne({
+    _id: id,
+    status: "active",
+  });
   if (!club) {
     throw new AppError("Club not found", 404);
   }
-
-  // 1. Update clubName
-  if (data.clubName) {
-    if (data.clubName !== club.clubName) {
-      await validateClubName(data.clubName);
-      updateData.clubName = data.clubName.trim();
-    }
-  }
-
-  // 2. Update description
-  if (data.description) {
-    if (typeof data.description !== "string") {
-      throw new AppError("description must be string", 400);
-    }
-    updateData.description = data.description.trim();
-  }
-
-  // 3. Update category
-  if (data.category) {
-    validateClubCategory(data.category);
-    updateData.category = data.category.trim().toLowerCase();
-  }
-
-  // 4. Update leaderId
-  if (data.leaderId) {
-    await validateClubLeaderId(data.leaderId);
-    updateData.leaderId = data.leaderId;
-  }
-
-  // 5. Update avatar
-  if (data.avatar) {
-    if (typeof data.avatar !== "string") {
-      throw new AppError("avatar must be string", 400);
-    }
-    updateData.avatar = data.avatar;
-  }
-
-  // 6. Update memberCount
-  if (data.memberCount !== undefined) {
-    validateMemberCount(data.memberCount);
-    updateData.memberCount = data.memberCount;
-  }
-
-  // 7. Update status
-  if (data.status) {
-    validateClubStatus(data.status);
-    updateData.status = data.status.trim().toLowerCase();
-  }
-
-  Object.assign(club, updateData);
-  await club.save();
+  club = await clubModel.findByIdAndUpdate(
+    id,
+    { status: "inactive" },
+    { new: true },
+  );
   return club;
 };
 //xoa vinh vien club
 export const deleteClub = async (id) => {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    throw new AppError("Invalid clubId format", 400);
-  }
+  validateObjectId(id);
 
   const club = await clubModel.findByIdAndDelete(id);
 
@@ -238,7 +238,5 @@ export const deleteClub = async (id) => {
     throw new AppError("Club not found", 404);
   }
 
-  return {
-    message: `Club ${id} was permanently deleted`,
-  };
+  return club;
 };
