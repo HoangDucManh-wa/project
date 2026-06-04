@@ -113,7 +113,7 @@ export const validateUniversity = (university) => {
 export const validateMajor = (major) => {
   let result = validateStringField("major", major, false);
   if (result === 0) return;
-  validateStringLength("major", major, 2, 100);
+  validateStringLength("major", major, 1, 100);
 };
 
 export const validateAcademicYear = (academicYear) => {

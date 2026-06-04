@@ -21,6 +21,7 @@ export const validateStringField = (field, data, required = false) => {
     if (required) {
       throw new AppError(`${field} is required`, 400);
     }
+    return 0;
   }
 };
 //Only operate correctly if we make sure that data is string
