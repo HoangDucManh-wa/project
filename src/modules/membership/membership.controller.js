@@ -10,7 +10,7 @@ import {
 //1. Join club
 export const joinClubController = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id || req.user._id;
     const clubId = req.params.clubId;
 
     const membership = await joinClubService({
@@ -32,7 +32,7 @@ export const joinClubController = async (req, res) => {
 //2. Leave club
 export const leaveClubController = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id || req.user._id;
     const clubId = req.params.clubId;
 
     const membership = await leaveClubService(userId, clubId);
@@ -51,9 +51,10 @@ export const leaveClubController = async (req, res) => {
 //3. Get club members
 export const getClubMembersController = async (req, res) => {
   try {
-    const clubId = req.params.clubId;
-
-    const members = await getClubMembersService(clubId);
+    const clubId = req.query.clubId;
+    const page = req.query.page;
+    const limit = req.query.limit;
+    const members = await getClubMembersService({ clubId, page, limit });
 
     return res.status(200).json({
       message: "get club members successful",
@@ -70,8 +71,9 @@ export const getClubMembersController = async (req, res) => {
 export const getUserClubsController = async (req, res) => {
   try {
     const userId = req.user._id;
-
-    const clubs = await getUserClubsService(userId);
+    const page = req.query.page;
+    const limit = req.query.limit;
+    const clubs = await getUserClubsService({ userId, page, limit });
 
     return res.status(200).json({
       message: "get user clubs successful",

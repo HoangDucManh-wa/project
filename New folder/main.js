@@ -1,42 +1,63 @@
-//Tao khôngn nhớ rõ đề lắm, hình như đề là cho một mảng vào, mỗi phần tử đại diện cho chiều cao một cột,
-//tính xem khe nao chứa được nhiều nước nhất, ở đây t sẽ giả sử cho chiều rộng của mỗi cột là như nhau và bằng 1
-//tất nhiên nếu đế có biến hóa thêm như chiều rộngn bằng chiều cao hay in ra 3 cột tạo thành khe nước lớn nhất t cx đều làm được
 function check(arr) {
   let v = [];
   let len = arr.length;
   if (len < 3) {
     return;
   }
-  let p1 = 0,
-    p2 = 1;
+  let p1 = 0;
+  let p3;
   const d = 1;
-  let h1 = 0,
-    h2 = 0;
-  let h = 0;
-  while (p2 < len) {
-    h1 = arr[p2] - arr[p1];
-    if (h1 < 0) {
-      p1++;
-      p2++;
-      if (p2 >= len) break;
-      h2 = arr[p2] - arr[p1];
-      if (h2 > 0) {
-        h = Math.min(-h1, h2);
-        v.push(h * d);
-        p1++;
+  let deta = 0;
+  let found = false;
+  let max = 0,
+    index = 0;
+  let rcg;
+  while (p1 < len - 1) {
+    let p2 = p1 + 1;
+    deta = arr[p2] - arr[p1];
+    if (deta < 0) {
+      found = false;
+      while (p2 < len) {
+        if (arr[p2] >= arr[p1]) {
+          found = true;
+          rcg = arr[p1] * (p2 - p1 - 1);
+          for (let i = p1 + 1; i < p2; i++) {
+            rcg -= arr[i];
+          }
+          v.push(rcg);
+          p1 = p2 - 1;
+          break;
+        }
         p2++;
       }
-    } else {
-      p1++;
-      p2++;
+      if (!found) {
+        p2 = p1 + 2;
+        while (p2 < len) {
+          if (arr[p2] > max) {
+            max = arr[p2];
+            index = p2;
+          }
+          p2++;
+        }
+        if (max > arr[p1 + 1]) {
+          rcg = (index - p1 - 1) * arr[index];
+          for (let i = p1 + 1; i < index; i++) {
+            rcg -= arr[i];
+          }
+          v.push(rcg);
+          p1 = index - 1;
+        }
+        max = 0;
+        index = 0;
+      }
     }
+    p1++;
   }
+  let volume = 0;
   console.log(v.toString());
-  if (v.length === 0) return 0;
-  let max = 0;
   for (let i = 0; i < v.length; i++) {
-    if (max < v[i]) max = v[i];
+    volume += v[i];
   }
-  return max;
+  return volume;
 }
-console.log(check([3, 1, 2, 8, 5, 10]));
+console.log(check([6, 2, 5, 2]));

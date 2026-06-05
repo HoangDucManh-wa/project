@@ -15,20 +15,20 @@ import { checkRole } from "../../shared/middlewares/authorization.middleware.js"
 const membershipRouter = express.Router();
 
 //1. Join club
-membershipRouter.post("/:clubId/join", verifyToken, joinClubController);
+membershipRouter.post("/join/:clubId", verifyToken, joinClubController);
 
 //2. Leave club
-membershipRouter.delete("/:clubId/leave", verifyToken, leaveClubController);
+membershipRouter.delete("/leave/:clubId", verifyToken, leaveClubController);
 
 //3. Get members of club
-membershipRouter.get("/:clubId/members", verifyToken, getClubMembersController);
+membershipRouter.get("/members", verifyToken, getClubMembersController);
 
 //4. Get current user's clubs
 membershipRouter.get("/my-clubs", verifyToken, getUserClubsController);
 
 //5. Update member role (Admin only)
 membershipRouter.patch(
-  "/:clubId/members/:memberId",
+  "/role/:clubId/:memberId",
   verifyToken,
   checkRole("admin"),
   updateMemberRoleByAdminController,
@@ -36,7 +36,7 @@ membershipRouter.patch(
 
 //6. Delete member from club (Admin only)
 membershipRouter.delete(
-  "/:clubId/members/:memberId",
+  "/delete/:clubId/:memberId",
   verifyToken,
   checkRole("admin"),
   deleteMemberByAdminController,
