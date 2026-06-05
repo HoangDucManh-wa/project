@@ -228,6 +228,19 @@ export const lockClub = async ({ id }) => {
   );
   return club;
 };
+//unlock club
+export const unlockClub = async ({ id }) => {
+  let club = await clubModel.findOne({
+    _id: id,
+    status: "inactive",
+  });
+  if (!club) {
+    throw new AppError("Club not found", 404);
+  }
+  club.status = "active";
+  await club.save();
+  return club;
+};
 //xoa vinh vien club
 export const deleteClub = async (id) => {
   validateObjectId(id);

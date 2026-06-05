@@ -7,6 +7,7 @@ import {
   getClubsByCategory,
   getClubsByKeyWords,
   lockClub,
+  unlockClub,
 } from "./club.service.js";
 
 const sendError = (res, err, mess) =>
@@ -123,7 +124,20 @@ export const lockClubController = async (req, res) => {
     return sendError(res, err, "lock club failed");
   }
 };
+export const unlockClubController = async (req, res) => {
+  try {
+    const id = req.params.id;
 
+    const result = await unlockClub({ id });
+
+    return res.status(200).json({
+      message: "unlock club successful",
+      data: result,
+    });
+  } catch (err) {
+    return sendError(res, err, "unlock club failed");
+  }
+};
 //3. Delete club permanently
 export const deleteClubController = async (req, res) => {
   try {

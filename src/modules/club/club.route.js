@@ -8,6 +8,7 @@ import {
   getClubsByKeyWordsController,
   getClubsController,
   lockClubController,
+  unlockClubController,
 } from "./club.controller.js";
 
 import { verifyToken } from "../../shared/middlewares/auth.middleware.js";
@@ -23,7 +24,18 @@ clubRouter.post("/", verifyToken, checkRole("admin"), createClubController);
 
 //2. Update club (Admin only)
 clubRouter.put("/:id", verifyToken, checkRole("admin"), updateClubController);
-clubRouter.put("/lock/:id", verifyToken, checkRole("admin"), lockClubController);
+clubRouter.put(
+  "/lock/:id",
+  verifyToken,
+  checkRole("admin"),
+  lockClubController,
+);
+clubRouter.put(
+  "/unlock/:id",
+  verifyToken,
+  checkRole("admin"),
+  unlockClubController,
+);
 
 //3. Delete club permanently (Admin only)
 clubRouter.delete(
